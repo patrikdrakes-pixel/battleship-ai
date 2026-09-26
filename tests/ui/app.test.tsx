@@ -74,6 +74,41 @@ describe('App', () => {
     });
   });
 
+  it('offers the three difficulties and defaults to medium', () => {
+    render(<App seed={5} aiDelayMs={0} />);
+    const select = screen.getByTestId('difficulty');
+    expect(select).toHaveValue('medium');
+    expect(
+      within(select)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Easy', 'Medium', 'Hard']);
+  });
+
+  it('starts a fresh game on the chosen difficulty and keeps it across New game', async () => {
+    const user = userEvent.setup();
+    render(<App seed={5} aiDelayMs={0} />);
+
+    await act(async () => {
+      await user.click(enemyCells()[0]);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('shot-log')).toHaveTextContent('You fired at');
+    });
+
+    const select = screen.getByTestId('difficulty');
+    await act(async () => {
+      await user.selectOptions(select, 'hard');
+    });
+    expect(select).toHaveValue('hard');
+    expect(enemyCells().filter((cell) => cell.dataset.fired === 'true')).toHaveLength(0);
+
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: 'New game' }));
+    });
+    expect(screen.getByTestId('difficulty')).toHaveValue('hard');
+  });
+
   it('starts a fresh game when New game is pressed', async () => {
     const user = userEvent.setup();
     render(<App seed={5} aiDelayMs={0} />);

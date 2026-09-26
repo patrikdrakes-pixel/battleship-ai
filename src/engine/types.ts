@@ -41,6 +41,8 @@ export type Phase = 'playing' | 'playerWon' | 'aiWon';
 
 export type Turn = 'player' | 'ai';
 
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
 export interface GameState {
   /** The player's own fleet; the AI fires here. */
   readonly player: Board;
@@ -51,4 +53,5 @@ export interface GameState {
   readonly playerShots: readonly Shot[];
   readonly aiShots: readonly Shot[];
   readonly seed: number;
+  readonly difficulty: Difficulty;
 }

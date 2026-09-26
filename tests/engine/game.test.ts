@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { shipCells } from '../../src/engine/board';
 import { BOARD_SIZE } from '../../src/engine/constants';
 import { aiFire, gameReducer, newGame, playerFire } from '../../src/engine/game';
-import type { Coord, GameState } from '../../src/engine/types';
+import type { Coord, Difficulty, GameState } from '../../src/engine/types';
 import { assertBoardConsistent } from '../helpers/invariants';
 
 function aiShipCells(state: GameState): Coord[] {
@@ -124,6 +124,39 @@ describe('transition: new game', () => {
     expect(fresh.player.ships.every((ship) => ship.hits === 0)).toBe(true);
     assertBoardConsistent(fresh.player, []);
     assertBoardConsistent(fresh.ai, []);
+  });
+});
+
+describe('difficulty', () => {
+  it('defaults to medium and stores the requested setting', () => {
+    expect(newGame(1).difficulty).toBe('medium');
+    expect(newGame(1, 'hard').difficulty).toBe('hard');
+  });
+
+  it('keeps the current difficulty when New Game does not name one', () => {
+    const hard = newGame(1, 'hard');
+    expect(gameReducer(hard, { type: 'NEW_GAME', seed: 2 }).difficulty).toBe('hard');
+  });
+
+  it('applies a newly selected difficulty and starts a fresh game', () => {
+    const played = gameReducer(newGame(1, 'hard'), {
+      type: 'FIRE',
+      coord: { r: 0, c: 0 },
+    });
+    const easy = gameReducer(played, { type: 'NEW_GAME', difficulty: 'easy' });
+    expect(easy.difficulty).toBe('easy');
+    expect(easy.turn).toBe('player');
+    expect(easy.playerShots).toEqual([]);
+  });
+
+  it('fires the strategy the state was created with', () => {
+    const fire = (difficulty: Difficulty): Coord => {
+      const state = playerFire(newGame(42, difficulty), { r: 0, c: 0 }).state;
+      return aiFire(state).state.aiShots[0].coord;
+    };
+    // Same seed, same board, same turn: only the strategy differs.
+    expect(fire('hard')).not.toEqual(fire('easy'));
+    expect(fire('medium')).not.toEqual(fire('hard'));
   });
 });
 

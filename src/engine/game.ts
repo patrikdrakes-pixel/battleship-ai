@@ -1,18 +1,28 @@
-import { createHuntTargetAi } from './ai/huntTarget';
+import { createAi } from './ai';
 import type { AiStrategy } from './ai/types';
 import { toObservedShots } from './ai/types';
 import { applyShot, isFleetSunk } from './board';
 import { BOARD_SIZE } from './constants';
 import { randomPlacement } from './placement';
 import { deriveSeed, mulberry32, randomSeed } from './rng';
-import type { Coord, GameState, Shot, ShotOutcome } from './types';
+import type { Coord, Difficulty, GameState, Shot, ShotOutcome } from './types';
+
+export const DEFAULT_DIFFICULTY: Difficulty = 'medium';
 
 export type GameAction =
   | { readonly type: 'FIRE'; readonly coord: Coord }
   | { readonly type: 'AI_TURN' }
-  | { readonly type: 'NEW_GAME'; readonly seed?: number };
+  | {
+      readonly type: 'NEW_GAME';
+      readonly seed?: number;
+      /** Omitted keeps the difficulty the current game is being played at. */
+      readonly difficulty?: Difficulty;
+    };
 
-export function newGame(seed: number = randomSeed()): GameState {
+export function newGame(
+  seed: number = randomSeed(),
+  difficulty: Difficulty = DEFAULT_DIFFICULTY,
+): GameState {
   return {
     player: randomPlacement(mulberry32(deriveSeed(seed, 0))),
     ai: randomPlacement(mulberry32(deriveSeed(seed, 1))),
@@ -21,6 +31,7 @@ export function newGame(seed: number = randomSeed()): GameState {
     playerShots: [],
     aiShots: [],
     seed,
+    difficulty,
   };
 }
 
@@ -64,7 +75,10 @@ export function aiFire(state: GameState, strategy?: AiStrategy): FireResult {
   }
   const ai =
     strategy ??
-    createHuntTargetAi(mulberry32(deriveSeed(state.seed, state.aiShots.length + 2)));
+    createAi(
+      state.difficulty,
+      mulberry32(deriveSeed(state.seed, state.aiShots.length + 2)),
+    );
   const coord = ai.nextShot({
     boardSize: BOARD_SIZE,
     shots: toObservedShots(state.aiShots),
@@ -95,6 +109,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'AI_TURN':
       return aiFire(state).state;
     case 'NEW_GAME':
-      return newGame(action.seed);
+      return newGame(action.seed, action.difficulty ?? state.difficulty);
   }
 }

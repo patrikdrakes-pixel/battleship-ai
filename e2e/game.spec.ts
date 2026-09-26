@@ -146,6 +146,45 @@ test('fits a 320px viewport without horizontal overflow', async ({ page }) => {
   await expect(enemyCell(page, 'J10')).toBeInViewport();
 });
 
+test('selecting a difficulty starts a game and survives New game', async ({ page }) => {
+  await open(page, SEED);
+  const select = page.getByTestId('difficulty');
+  await expect(select).toHaveValue('medium');
+  await expect(select.locator('option')).toHaveText(['Easy', 'Medium', 'Hard']);
+
+  const { enemyWaterLabels } = layout(SEED);
+  await fireAt(page, enemyWaterLabels[0]);
+
+  await select.selectOption('hard');
+  await expect(select).toHaveValue('hard');
+  await expect(
+    page.getByTestId('enemy-board').locator('[data-fired="true"]'),
+  ).toHaveCount(0);
+
+  await fireAt(page, enemyWaterLabels[1]);
+  await expect(page.getByTestId('shot-log')).toContainText('Enemy fired at');
+
+  await page.getByRole('button', { name: 'New game' }).click();
+  await expect(select).toHaveValue('hard');
+  await expect(page.getByTestId('status')).toContainText('Your turn');
+});
+
+test('shot states are visually distinct', async ({ page }) => {
+  await open(page, SEED);
+  const { enemyShipLabels, enemyWaterLabels } = layout(SEED);
+
+  const color = (label: string) =>
+    enemyCell(page, label).evaluate((el) => getComputedStyle(el).backgroundColor);
+
+  const untouched = await color(enemyWaterLabels[1]);
+  await fireAt(page, enemyWaterLabels[0]);
+  const miss = await color(enemyWaterLabels[0]);
+  await fireAt(page, enemyShipLabels[0]);
+  const hit = await color(enemyShipLabels[0]);
+
+  expect(new Set([untouched, miss, hit]).size).toBe(3);
+});
+
 test('new game resets the board', async ({ page }) => {
   await open(page, SEED);
   const { enemyWaterLabels } = layout(SEED);

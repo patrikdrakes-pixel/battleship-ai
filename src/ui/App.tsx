@@ -1,4 +1,6 @@
+import type { Difficulty } from '../engine/types';
 import { Board } from './components/Board';
+import { DifficultySelect } from './components/DifficultySelect';
 import { FleetStatus } from './components/FleetStatus';
 import { NewGameButton } from './components/NewGameButton';
 import { StatusBanner } from './components/StatusBanner';
@@ -9,17 +11,25 @@ export interface AppProps {
   /** Fixed seed for reproducible games (used by tests and `?seed=`). */
   readonly seed?: number;
   readonly aiDelayMs?: number;
+  readonly difficulty?: Difficulty;
 }
 
-export function App({ seed, aiDelayMs }: AppProps) {
-  const { state, fire, restart } = useGame({ seed, aiDelayMs });
+export function App({ seed, aiDelayMs, difficulty }: AppProps) {
+  const { state, fire, restart, selectDifficulty } = useGame({
+    seed,
+    aiDelayMs,
+    difficulty,
+  });
   const playerTurn = state.phase === 'playing' && state.turn === 'player';
 
   return (
     <main className="app">
       <header className="app-header">
         <h1>Battleship</h1>
-        <NewGameButton onClick={restart} />
+        <div className="app-controls">
+          <DifficultySelect value={state.difficulty} onSelect={selectDifficulty} />
+          <NewGameButton onClick={restart} />
+        </div>
       </header>
 
       <StatusBanner state={state} />
