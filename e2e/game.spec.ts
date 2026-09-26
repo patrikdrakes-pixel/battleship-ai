@@ -120,6 +120,32 @@ test('player can lose when the AI destroys their fleet', async ({ page }) => {
   ).toHaveCount(17);
 });
 
+test('sunk ships are styled apart from plain hits', async ({ page }) => {
+  await open(page, SEED);
+  const destroyer = newGame(SEED).ai.ships.find((ship) => ship.id === 'destroyer');
+  if (destroyer === undefined) throw new Error('missing destroyer');
+  const labels = shipCells(destroyer).map(cellLabel);
+
+  await fireAt(page, labels[0]);
+  await expect(enemyCell(page, labels[0])).toHaveAttribute('data-sunk', 'false');
+
+  for (const label of labels.slice(1)) await fireAt(page, label);
+  for (const label of labels) {
+    await expect(enemyCell(page, label)).toHaveAttribute('data-sunk', 'true');
+  }
+});
+
+test('fits a 320px viewport without horizontal overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await open(page, SEED);
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await expect(enemyCell(page, 'J10')).toBeInViewport();
+});
+
 test('new game resets the board', async ({ page }) => {
   await open(page, SEED);
   const { enemyWaterLabels } = layout(SEED);

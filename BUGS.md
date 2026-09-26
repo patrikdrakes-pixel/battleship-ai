@@ -20,7 +20,34 @@ Only defects actually hit while building this project are listed here.
 - **Verification.** `npm run e2e` — 10/10 passing on the desktop and mobile projects,
   including the full-win and full-loss games that previously failed.
 
-## 2. `npm run build` failed once the E2E specs imported engine code
+## 2. Sunk ships looked identical to a merely damaged ship
+
+- **Symptom.** Found during browser testing: sinking the Carrier (`?seed=20260926`, fire
+  F1–F5) announced the sink in the log and struck the ship out in the fleet panel, but its
+  five cells stayed the same red as any other hit, so the board alone did not show which
+  ships were finished.
+- **Root cause.** `Cell` derived its appearance from `CellState` only, which has no `sunk`
+  member — sunk-ness is a property of a `Ship`, not of a cell, and nothing joined the two.
+- **Fix.** `Board` computes the sunk ships' cells (`board.ships.filter(isSunk)`) and passes
+  `sunk` down; `Cell` renders `.cell--sunk` and exposes `data-sunk`, and the accessible
+  label reads "sunk" instead of "hit".
+- **Verification.** New E2E case `sunk ships are styled apart from plain hits`: the first
+  destroyer cell is `data-sunk="false"`, and both cells flip to `true` once it sinks.
+
+## 3. Horizontal overflow at a 320px viewport
+
+- **Symptom.** Found during browser testing: at 320px the page scrolled sideways
+  (`scrollWidth` 330 vs `clientWidth` 320), clipping column J and the fleet counters. 375px
+  was fine.
+- **Root cause.** `.boards` used `repeat(auto-fit, minmax(320px, 1fr))`. The 320px track
+  floor is not reduced by `auto-fit`, so together with the page padding it exceeded the
+  viewport on the narrowest phones.
+- **Fix.** `minmax(min(320px, 100%), 1fr)` lets the track shrink to the container, plus
+  tighter board padding and grid gaps under the 480px breakpoint.
+- **Verification.** New E2E case `fits a 320px viewport without horizontal overflow`
+  asserts zero overflow and that cell J10 is in the viewport.
+
+## 4. `npm run build` failed once the E2E specs imported engine code
 
 - **Symptom.** `npx playwright test` aborted with
   `Error: Process from config.webServer was not able to start. Exit code: 2`; running the
@@ -37,7 +64,7 @@ Only defects actually hit while building this project are listed here.
 - **Verification.** `npm run build` succeeds, and Playwright's managed preview server
   starts, so `npm run e2e` runs end to end.
 
-## 3. Three moderate advisories in the initial dependency tree
+## 5. Three moderate advisories in the initial dependency tree
 
 - **Symptom.** `npm install` reported `3 moderate severity vulnerabilities`, which would
   have failed the `npm audit --audit-level=moderate` CI job on the first push.
@@ -48,7 +75,7 @@ Only defects actually hit while building this project are listed here.
 - **Verification.** `npm audit` reports `found 0 vulnerabilities`; the CI `audit` job runs
   it on every pull request.
 
-## 4. Unbound event handlers in the component props
+## 6. Unbound event handlers in the component props
 
 - **Symptom.** `npm run lint` failed with `@typescript-eslint/unbound-method` in
   `App.tsx`, `Board.tsx`, `Cell.tsx` and `NewGameButton.tsx`.

@@ -5,6 +5,7 @@
   --text: #e8f1fa;
   --muted: #8fa9c4;
   --hit: #e2574c;
+  --sunk: #8c1f18;
   --ship: #4f6f8f;
   --accent: #35c4a8;
 }
@@ -92,7 +93,7 @@ body {
 
 .boards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 1.5rem;
 }
 
@@ -168,6 +169,12 @@ button.cell:not(:disabled):hover {
   background: #24405c;
 }
 
+.cell--sunk {
+  background: var(--sunk);
+  border-color: #f0a59f;
+  box-shadow: inset 0 0 0 2px #f0a59f;
+}
+
 .fleet {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -226,7 +233,16 @@ button.cell:not(:disabled):hover {
     padding: 1rem 0.6rem 2rem;
   }
 
+  .board-panel {
+    padding: 0.6rem;
+  }
+
   .board-row {
     grid-template-columns: 1.1rem repeat(10, 1fr);
+    gap: 1px;
+  }
+
+  .fleet-item {
+    gap: 0.35rem;
   }
 }
