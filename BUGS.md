@@ -58,7 +58,7 @@ Only defects actually hit while building this project are listed here.
   game is over, and shows `AFLOAT`/`SUNK` during play. Sinking is still announced, since
   the rules reveal it.
 - **Verification.** Component test `does not reveal which enemy ship an unsunk hit belongs
-  to`: after a hit on a carrier cell all five enemy entries still read `AFLOAT` and the
+to`: after a hit on a carrier cell all five enemy entries still read `AFLOAT` and the
   panel contains no `1/5`.
 
 ## 5. AI could retire a live ship's hit when two ships touch
