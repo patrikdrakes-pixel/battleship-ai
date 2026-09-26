@@ -60,6 +60,9 @@ export function placeShip(
   orientation: Orientation,
   size: number,
 ): Board {
+  if (board.ships.some((ship) => ship.id === id)) {
+    throw new Error(`Duplicate ship id ${id}`);
+  }
   if (!canPlace(board, origin, orientation, size)) {
     throw new Error(`Illegal placement for ${id} at ${coordKey(origin)} ${orientation}`);
   }

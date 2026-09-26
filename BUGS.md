@@ -47,7 +47,48 @@ Only defects actually hit while building this project are listed here.
 - **Verification.** New E2E case `fits a 320px viewport without horizontal overflow`
   asserts zero overflow and that cell J10 is in the viewport.
 
-## 4. `npm run build` failed once the E2E specs imported engine code
+## 4. The enemy fleet panel named the ship behind an unsunk hit
+
+- **Symptom.** A plain hit on the enemy board bumped one named ship's counter in the
+  "Enemy fleet" panel (`Carrier 1/5`), so the player learned which ship they had found —
+  and its length — before sinking it.
+- **Root cause.** `FleetStatus` rendered `ship.hits` for both fleets. Per-ship damage is
+  public for your own fleet but hidden information for the opponent's.
+- **Fix.** `FleetStatus` takes `revealDamage`; the enemy panel passes it only once the
+  game is over, and shows `AFLOAT`/`SUNK` during play. Sinking is still announced, since
+  the rules reveal it.
+- **Verification.** Component test `does not reveal which enemy ship an unsunk hit belongs
+  to`: after a hit on a carrier cell all five enemy entries still read `AFLOAT` and the
+  panel contains no `1/5`.
+
+## 5. AI could retire a live ship's hit when two ships touch
+
+- **Symptom.** With two ships adjacent in the same line, sinking one could leave the AI
+  hunting instead of finishing the neighbour it had already hit.
+- **Root cause.** `retireSunkShip` had to split a run of hits longer than the sunk ship.
+  It kept `run.slice(0, size)` — the sinking cell plus cells walked backwards — which is
+  an arbitrary choice: if the sunk ship extended forwards, the retired set contained the
+  neighbour's hit and kept a dead cell.
+- **Fix.** Retire the whole run when its length matches the ship exactly; otherwise retire
+  only the cells shared by every length-`size` window of the run that covers the sinking
+  shot. Ambiguous cells stay targetable, which can cost a shot but never abandons a live
+  ship.
+- **Verification.** `never retires a live ship's hit when the run is ambiguous` and
+  `keeps both candidates when a sink shot sits between two hits` in `tests/engine/ai.test.ts`,
+  plus the existing 60-game fuzz suite and the AI effectiveness bound.
+
+## 6. `placeShip` accepted a duplicate ship id
+
+- **Symptom.** Calling `placeShip` twice with the same `ShipId` produced a board where
+  `applyShot` credited hits to whichever entry it found first, so the fleet could read as
+  destroyed while a ship was untouched. Not reachable from `randomPlacement`, but nothing
+  stopped a future caller.
+- **Root cause.** `placeShip` validated geometry only, never identity.
+- **Fix.** Throw `Duplicate ship id <id>` when the board already carries that id.
+- **Verification.** `rejects a ship id that is already on the board` in
+  `tests/engine/board.test.ts`.
+
+## 7. `npm run build` failed once the E2E specs imported engine code
 
 - **Symptom.** `npx playwright test` aborted with
   `Error: Process from config.webServer was not able to start. Exit code: 2`; running the
@@ -64,7 +105,7 @@ Only defects actually hit while building this project are listed here.
 - **Verification.** `npm run build` succeeds, and Playwright's managed preview server
   starts, so `npm run e2e` runs end to end.
 
-## 5. Three moderate advisories in the initial dependency tree
+## 8. Three moderate advisories in the initial dependency tree
 
 - **Symptom.** `npm install` reported `3 moderate severity vulnerabilities`, which would
   have failed the `npm audit --audit-level=moderate` CI job on the first push.
@@ -75,7 +116,7 @@ Only defects actually hit while building this project are listed here.
 - **Verification.** `npm audit` reports `found 0 vulnerabilities`; the CI `audit` job runs
   it on every pull request.
 
-## 6. Unbound event handlers in the component props
+## 9. Unbound event handlers in the component props
 
 - **Symptom.** `npm run lint` failed with `@typescript-eslint/unbound-method` in
   `App.tsx`, `Board.tsx`, `Cell.tsx` and `NewGameButton.tsx`.

@@ -34,7 +34,11 @@ export function App({ seed, aiDelayMs }: AppProps) {
             disabled={!playerTurn}
             onFire={fire}
           />
-          <FleetStatus title="Enemy fleet" board={state.ai} />
+          <FleetStatus
+            title="Enemy fleet"
+            board={state.ai}
+            revealDamage={state.phase !== 'playing'}
+          />
         </div>
         <div className="board-column">
           <Board
@@ -43,7 +47,7 @@ export function App({ seed, aiDelayMs }: AppProps) {
             revealShips
             interactive={false}
           />
-          <FleetStatus title="Your fleet" board={state.player} />
+          <FleetStatus title="Your fleet" board={state.player} revealDamage />
         </div>
       </div>
     </main>

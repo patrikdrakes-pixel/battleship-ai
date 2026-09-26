@@ -32,6 +32,13 @@ describe('board placement', () => {
     expect(canPlace(board, coord(0, 1), 'V', 4)).toBe(true);
   });
 
+  it('rejects a ship id that is already on the board', () => {
+    const board = placeShip(createEmptyBoard(), 'carrier', coord(4, 2), 'H', 5);
+    expect(() => placeShip(board, 'carrier', coord(0, 0), 'H', 5)).toThrow(
+      /Duplicate ship id/,
+    );
+  });
+
   it('keeps ships, grid and shipAt consistent after initial placement', () => {
     assertBoardConsistent(fixedBoard(), []);
   });

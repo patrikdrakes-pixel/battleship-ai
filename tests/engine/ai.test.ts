@@ -156,10 +156,29 @@ describe('returning to hunt after a sink', () => {
     );
   });
 
-  it('retires only the sunk ship when two ships are adjacent', () => {
-    // A vertical 2-ship at (4,4)-(5,4) sinks while (6,4) belongs to its neighbour.
+  it('retires only the sunk ship when the run resolves to one placement', () => {
+    // A vertical 2-ship at (4,4)-(5,4): the run is exactly its length.
+    const shots = [hit(4, 4), sunk(5, 4, 2)];
+    expect(deriveUnresolvedHits(view(shots))).toEqual([]);
+    expect(planShot(view(shots)).mode).toBe('hunt');
+  });
+
+  it("never retires a live ship's hit when the run is ambiguous", () => {
+    // (4,4) belongs to a neighbour; the sunk 3-ship runs (5,4)-(7,4). Only the
+    // cells every placement agrees on may be retired, so (4,4) stays a target.
+    const shots = [hit(4, 4), hit(6, 4), hit(7, 4), sunk(5, 4, 3)];
+    const unresolved = deriveUnresolvedHits(view(shots));
+    expect(keys(unresolved)).toContain(coordKey(coord(4, 4)));
+    expect(planShot(view(shots)).mode).toBe('target');
+  });
+
+  it('keeps both candidates when a sink shot sits between two hits', () => {
+    // The 2-ship sank at (5,4) with hits either side: it is either (4,4)-(5,4)
+    // or (5,4)-(6,4), so neither neighbour may be written off.
     const shots = [hit(6, 4), hit(4, 4), sunk(5, 4, 2)];
-    expect(deriveUnresolvedHits(view(shots))).toEqual([coord(6, 4)]);
+    expect(keys(deriveUnresolvedHits(view(shots)))).toEqual(
+      keys([coord(4, 4), coord(6, 4)]),
+    );
     expect(planShot(view(shots)).mode).toBe('target');
   });
 });
