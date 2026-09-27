@@ -57,24 +57,28 @@ function retireSunkShip(active: readonly Coord[], sinkAt: Coord, size: number): 
     ...walk(present, sinkAt, forward),
   ]);
 
-  const exact = runs.find((run) => run.length === size);
-  // A run longer than the sunk ship mixes in a neighbouring ship's hits, and
-  // the observed history cannot say where the boundary is. Retire only the
-  // cells every length-`size` window containing the sinking shot agrees on, so
-  // the surviving ship stays targetable.
-  const best = exact ?? ambiguousCore(longest(runs), sinkAt, size);
+  // Every run at least `size` long could hold the sunk ship, and a run longer
+  // than it mixes in a neighbouring ship's hits. The observed history cannot
+  // say which axis or where the boundary is, so retire only the cells all of
+  // the candidate placements agree on and leave a surviving ship targetable.
+  const candidates = runs
+    .filter((run) => run.length >= size)
+    .map((run) => ambiguousCore(run, sinkAt, size));
+  const best = candidates.length === 0 ? [sinkAt] : intersect(candidates);
 
   const retired = new Set(best.map(coordKey));
   return active.filter((coord) => !retired.has(coordKey(coord)));
 }
 
-function longest(runs: readonly (readonly Coord[])[]): readonly Coord[] {
-  return runs.reduce((a, b) => (b.length > a.length ? b : a));
+function intersect(groups: readonly (readonly Coord[])[]): readonly Coord[] {
+  return groups.reduce((a, b) => {
+    const keep = new Set(b.map(coordKey));
+    return a.filter((coord) => keep.has(coordKey(coord)));
+  });
 }
 
 /** Cells shared by every length-`size` window of `run` that covers `sinkAt`. */
 function ambiguousCore(run: readonly Coord[], sinkAt: Coord, size: number): Coord[] {
-  if (run.length < size) return [sinkAt];
   const index = run.findIndex((coord) => coordKey(coord) === coordKey(sinkAt));
   const first = Math.max(0, index - size + 1);
   const last = Math.min(index, run.length - size);
