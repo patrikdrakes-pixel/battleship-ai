@@ -172,6 +172,16 @@ describe('returning to hunt after a sink', () => {
     expect(planShot(view(shots)).mode).toBe('target');
   });
 
+  it('keeps both axes alive when each fits the sunk ship exactly', () => {
+    // The 2-ship sank at (5,4); (4,4) above and (5,5) beside it both form a
+    // run of exactly 2, so the surviving ship's hit must stay a target.
+    const shots = [hit(4, 4), hit(5, 5), sunk(5, 4, 2)];
+    expect(keys(deriveUnresolvedHits(view(shots)))).toEqual(
+      keys([coord(4, 4), coord(5, 5)]),
+    );
+    expect(planShot(view(shots)).mode).toBe('target');
+  });
+
   it('keeps both candidates when a sink shot sits between two hits', () => {
     // The 2-ship sank at (5,4) with hits either side: it is either (4,4)-(5,4)
     // or (5,4)-(6,4), so neither neighbour may be written off.

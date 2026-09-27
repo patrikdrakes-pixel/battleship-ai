@@ -127,3 +127,20 @@ to`: after a hit on a carrier cell all five enemy entries still read `AFLOAT` an
   (`readonly onFire?: (coord: Coord) => void`), and moved shared non-component exports out
   of component files into `src/ui/labels.ts` to satisfy the Fast Refresh rule.
 - **Verification.** `npm run lint` passes with no warnings.
+
+## 10. The AI wrote off a live ship when both axes fitted the sunk one
+
+- **Symptom.** After a sink, the hunt/target AI (and the Hard probability AI, which
+  reuses `deriveUnresolvedHits`) sometimes kept firing around the wreck while ignoring a
+  confirmed hit on a ship that was still afloat.
+- **Root cause.** `retireSunkShip` picked the _first_ run whose length equalled the sunk
+  ship with `runs.find(...)`, and the horizontal run is built before the vertical one. A
+  sink with hits both above and beside it produces an exact-length run on each axis, so
+  the horizontal one won regardless of the ship's real orientation and the vertical
+  neighbour's hit was retired as wreckage.
+- **Fix.** Both axes are now treated as candidate placements: every run at least `size`
+  long is reduced to the cells all of its length-`size` windows agree on, and only the
+  intersection of those candidate sets is retired.
+- **Verification.** New unit test "keeps both axes alive when each fits the sunk ship
+  exactly" in `tests/engine/ai.test.ts`; the existing ambiguity, sink-retirement and fuzz
+  tests still pass (69 unit tests, 18 Playwright tests).
