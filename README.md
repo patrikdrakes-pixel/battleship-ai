@@ -7,6 +7,7 @@ React + TypeScript + Vite, with the game rules implemented as a framework-free e
 - Click an enemy cell to fire; hit / miss / sunk / win / loss are all shown
 - The AI replies after every player shot and never fires at a cell twice
 - New Game restarts at any time; games are reproducible with `?seed=`
+- Easy / Medium / Hard AI difficulty, selectable at any time
 
 ## Architecture
 
@@ -25,12 +26,15 @@ src/
     game.ts            newGame, playerFire, aiFire, gameReducer (all transitions)
     ai/
       types.ts         AiView, AiStrategy, ObservedShot
-      huntTarget.ts    hunt/target strategy
+      random.ts        easy strategy (random untried cell)
+      huntTarget.ts    medium strategy (parity hunt + target)
+      probability.ts   hard strategy (probability density)
+      index.ts         DIFFICULTIES and createAi(difficulty, rng)
   ui/
     hooks/useGame.ts   useReducer(gameReducer) + cosmetic AI delay
     components/        Board, Cell, FleetStatus, NewGameButton, StatusBanner
     App.tsx, labels.ts, styles/app.css
-  main.tsx             entry point, parses ?seed= and ?delay=
+  main.tsx             entry point, parses ?seed=, ?delay= and ?difficulty=
 ```
 
 ### Game state and transitions
@@ -46,17 +50,35 @@ intents (`FIRE`, `AI_TURN`, `NEW_GAME`) and renders `phase` / `turn`.
 | `playing`, `ai`        | `AI_TURN`                            | shot sinks the last player ship               | `aiWon`             |
 | `playing`, `player`    | `FIRE(coord)`                        | already fired at `coord`                      | unchanged           |
 | any                    | out-of-turn or terminal-state action | —                                             | unchanged           |
-| any                    | `NEW_GAME(seed?)`                    | —                                             | `playing`, `player` |
+| any                    | `NEW_GAME(seed?, difficulty?)`       | —                                             | `playing`, `player` |
 
 The win check happens in the same step as the shot, so a losing side never gets a reply
 shot. The AI keeps no mutable state: its next move is derived from its own shot history,
 so a reset cannot leave it stale.
 
-### AI
+### AI and difficulty
 
-`createHuntTargetAi(rng)` sees only an `AiView` — board size plus its own previous shots
+Every difficulty is an `AiStrategy` in the engine; `createAi(difficulty, rng)` maps the
+setting to a strategy, and the UI only stores the chosen `difficulty` in game state.
+
+- **Easy** (`createRandomAi`): uniformly random untried cell; it ignores hit/miss
+  outcomes entirely, so it never chases a damaged ship.
+- **Medium** (`createHuntTargetAi`): the parity hunt / orthogonal target strategy
+  described below — the default.
+- **Hard** (`createProbabilityAi`): probability density. It enumerates every legal
+  placement of the ships still afloat, discards placements crossing a known miss,
+  weights placements that explain unresolved hits, and fires at the untried cell covered
+  by the most placements (seeded randomness only breaks ties).
+
+Difficulty is chosen in the header selector; picking a new one immediately starts a fresh
+game at that setting, and New Game keeps the current setting. `?difficulty=easy|medium|hard`
+sets the initial value.
+
+All three strategies see only an `AiView` — board size plus its own previous shots
 and their observed outcomes (a plain hit does not reveal which ship was struck; a sink
-reveals ship id and size). It never receives the player's `Board`.
+reveals ship id and size). They never receive the player's `Board`.
+
+Medium in detail:
 
 - **Hunt**: uniformly random cell on the `(r + c) % 2 === 0` parity lattice (the smallest
   ship is 2 cells, so this cannot miss a ship), falling back to any untried cell.
@@ -75,7 +97,7 @@ npm run dev        # http://localhost:5173
 ```
 
 Useful query parameters: `?seed=12345` for a reproducible game, `?delay=0` to remove the
-cosmetic AI thinking delay.
+cosmetic AI thinking delay, `?difficulty=hard` for the starting difficulty.
 
 ## Tests and checks
 
@@ -127,7 +149,7 @@ and production deployments from `main` with no extra configuration.
 
 - No backend, no network calls, no user data storage — the whole game runs client-side.
 - No `dangerouslySetInnerHTML`; all rendering goes through React escaping.
-- The only untrusted input is the `?seed=` / `?delay=` query string, validated against
+- The only untrusted input is the `?seed=` / `?delay=` / `?difficulty=` query string, validated against
   `^\d{1,10}$` and `Number.isSafeInteger` before use.
 - Dependencies are dev-only apart from React; `npm audit` gates CI and Dependabot keeps
   updates flowing.

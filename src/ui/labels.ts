@@ -1,7 +1,13 @@
 import { FLEET } from '../engine/constants';
-import type { Coord, GameState, ShipId, Shot } from '../engine/types';
+import type { Coord, Difficulty, GameState, ShipId, Shot } from '../engine/types';
 
 export const COLUMN_LABELS = [...'ABCDEFGHIJ'];
+
+export const DIFFICULTY_LABELS: Readonly<Record<Difficulty, string>> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+};
 
 export function cellLabel(coord: Coord): string {
   return `${COLUMN_LABELS[coord.c]}${coord.r + 1}`;
