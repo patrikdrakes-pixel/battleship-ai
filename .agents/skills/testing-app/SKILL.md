@@ -6,14 +6,17 @@ description: Deterministic browser verification of Battleship shot states, diffi
 # Battleship browser testing
 
 ## Runtime
+
 The app is a static React/Vite frontend with no backend or login. Run
 `source ~/.nvm/nvm.sh && npm run dev -- --host 0.0.0.0` if Node is supplied by NVM.
 Confirm localhost:5173 is reachable before starting a recording.
 
 ## Devin Secrets Needed
+
 None.
 
 ## Reproducible gameplay
+
 Use `?seed=<integer>&delay=0&difficulty=easy|medium|hard`.
 Import `newGame` and `shipCells` from the engine when deterministic coordinates
 are needed; derive the fixture again if fleet generation changes.
@@ -26,6 +29,7 @@ Enemy buttons expose `data-cell`; own cells do not.
 Wait for `data-testid="status"` to show Your turn before firing again.
 
 ## Difficulty lifecycle
+
 The header selector has `data-testid="difficulty"`. Changing it resets the game;
 New game retains the choice. Check both shot histories and the empty shot log.
 Enemy fleet damage is deliberately hidden as AFLOAT until sunk; own counters
@@ -34,6 +38,7 @@ Use a nonzero delay to test reset before an AI timer finishes, then wait past
 that deadline to ensure no stale reply enters the new game.
 
 ## Visual evidence
+
 Capture actual pixels for untouched/miss/hit/sunk and inspect them together.
 At narrow widths scroll to both fleets, checking all A-J columns and counters.
 Record both innerWidth and document clientWidth: desktop Chromium scrollbars
