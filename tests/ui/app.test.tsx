@@ -10,6 +10,16 @@ function enemyCells(): HTMLElement[] {
   return within(screen.getByTestId('enemy-board')).getAllByRole('button');
 }
 
+async function sinkEnemyFleet(user: ReturnType<typeof userEvent.setup>) {
+  for (const label of newGame(5).ai.ships.flatMap(shipCells).map(cellLabel)) {
+    const target = enemyCells().find((cell) => cell.dataset.cell === label);
+    if (target === undefined) throw new Error(`missing cell ${label}`);
+    await act(async () => {
+      await user.click(target);
+    });
+  }
+}
+
 describe('App', () => {
   it('renders two 10x10 boards and the fleet roster', () => {
     render(<App seed={5} aiDelayMs={0} />);
@@ -196,6 +206,33 @@ describe('App', () => {
     expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
     const enemy = within(screen.getByTestId('enemy-board')).getByTestId('ship-layer');
     expect(enemy.querySelectorAll('[data-ship]')).toHaveLength(5);
+  });
+
+  it('traps focus in the overlay and closes it on Escape', async () => {
+    const user = userEvent.setup();
+    render(<App seed={5} aiDelayMs={0} />);
+    await sinkEnemyFleet(user);
+
+    const overlay = await screen.findByTestId('game-over');
+    const buttons = within(overlay).getAllByRole('button');
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Play again' })).toHaveFocus();
+    });
+
+    await act(async () => {
+      await user.tab({ shift: true });
+    });
+    expect(buttons[buttons.length - 1]).toHaveFocus();
+
+    await act(async () => {
+      await user.tab();
+    });
+    expect(buttons[0]).toHaveFocus();
+
+    await act(async () => {
+      await user.keyboard('{Escape}');
+    });
+    expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
   });
 
   it('offers the three difficulties and defaults to medium', () => {

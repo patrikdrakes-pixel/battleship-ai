@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react';
 import { DIFFICULTIES } from '../../engine/ai';
 import type { Difficulty, GameState } from '../../engine/types';
 import { DIFFICULTY_LABELS } from '../labels';
@@ -17,6 +17,7 @@ export function GameOverOverlay({
   onSelectDifficulty,
   onDismiss,
 }: GameOverOverlayProps) {
+  const card = useRef<HTMLDivElement>(null);
   const playAgain = useRef<HTMLButtonElement>(null);
   const won = state.phase === 'playerWon';
   const { shots, hits, accuracy, shipsSunk, shipsLost } = gameSummary(state);
@@ -25,6 +26,32 @@ export function GameOverOverlay({
     playAgain.current?.focus();
   }, []);
 
+  /** Keeps keyboard focus inside the dialog and closes it on Escape. */
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onDismiss();
+        return;
+      }
+      if (event.key !== 'Tab' || card.current === null) return;
+
+      const buttons = card.current.querySelectorAll<HTMLButtonElement>('button');
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (first === undefined || last === undefined) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    },
+    [onDismiss],
+  );
+
   return (
     <div className="overlay" data-testid="game-over">
       <div
@@ -32,6 +59,8 @@ export function GameOverOverlay({
         role="dialog"
         aria-modal="true"
         aria-labelledby="game-over-title"
+        ref={card}
+        onKeyDown={onKeyDown}
       >
         <h2 className="overlay-title" id="game-over-title">
           {won ? 'Victory' : 'Defeat'}
