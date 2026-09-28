@@ -9,6 +9,17 @@ export const DIFFICULTY_LABELS: Readonly<Record<Difficulty, string>> = {
   hard: 'Hard',
 };
 
+export const LEGEND_ITEMS: readonly {
+  readonly key: string;
+  readonly className: string;
+  readonly label: string;
+}[] = [
+  { key: 'empty', className: 'cell cell--empty', label: 'Untouched' },
+  { key: 'miss', className: 'cell cell--miss', label: 'Miss' },
+  { key: 'hit', className: 'cell cell--hit', label: 'Hit' },
+  { key: 'sunk', className: 'cell cell--hit cell--sunk', label: 'Sunk' },
+];
+
 export function cellLabel(coord: Coord): string {
   return `${COLUMN_LABELS[coord.c]}${coord.r + 1}`;
 }

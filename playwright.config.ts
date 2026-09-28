@@ -11,6 +11,8 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'on-first-retry',
+    // Shot feedback is animated; assertions should never race a transition.
+    reducedMotion: 'reduce',
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },

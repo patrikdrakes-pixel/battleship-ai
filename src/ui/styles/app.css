@@ -157,15 +157,72 @@ body {
 }
 
 .board {
+  --label-col: 1.4rem;
+  --cell-gap: 2px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--cell-gap);
+}
+
+/* Positioning context for the hull layer, which spans the cells only. */
+.board-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cell-gap);
 }
 
 .board-row {
   display: grid;
-  grid-template-columns: 1.4rem repeat(10, 1fr);
-  gap: 2px;
+  grid-template-columns: var(--label-col) repeat(10, 1fr);
+  gap: var(--cell-gap);
+}
+
+/* Hulls sit under the cells: undamaged ship cells are transparent so the
+   silhouette shows, while hit/miss/sunk cells stay opaque on top. */
+.ship-layer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: calc(var(--label-col) + var(--cell-gap));
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  gap: var(--cell-gap);
+  pointer-events: none;
+}
+
+/* Water behind the hull, since the ship cells above it are transparent. */
+.ship-slot {
+  background: var(--water);
+  border-radius: 3px;
+}
+
+.ship-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ship-hull {
+  fill: var(--ship);
+  stroke: #9dbad6;
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.ship-deck,
+.ship-tower {
+  stroke: #9dbad6;
+  stroke-width: 0.4;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.ship-svg--sunk .ship-hull {
+  fill: #3b1f28;
+  stroke: #ffd7d2;
 }
 
 .board-label {
@@ -210,7 +267,7 @@ button.cell:not(:disabled):hover {
 }
 
 .cell--ship {
-  background: var(--ship);
+  background: transparent;
 }
 
 .cell--hit {
@@ -235,7 +292,7 @@ button.cell:not(:disabled):hover {
 }
 
 .cell--sunk {
-  background: var(--sunk);
+  background: rgb(122 19 13 / 88%);
   border-color: #ffd7d2;
   box-shadow: inset 0 0 0 2px #ffd7d2;
 }
@@ -243,6 +300,198 @@ button.cell:not(:disabled):hover {
 .cell--sunk::after {
   content: '✕';
   color: #ffe6e2;
+}
+
+/* The newest shot on each board, so the shot log and the grid line up. */
+.cell--last {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.legend {
+  margin: 0 0 1.25rem;
+}
+
+.legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  aspect-ratio: auto;
+  flex: none;
+  animation: none;
+}
+
+.legend-swatch::after {
+  font-size: 0.6rem;
+}
+
+/* Motion is decoration only: every animated rule below is skipped under
+   `prefers-reduced-motion`, and no state depends on an animation finishing. */
+@keyframes splash {
+  from {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes impact {
+  0% {
+    transform: scale(0.7);
+    filter: brightness(2.2);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes sink {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.cell--miss {
+  animation: splash 200ms ease-out;
+}
+
+.cell--hit {
+  animation: impact 220ms ease-out;
+}
+
+.cell--sunk {
+  animation: sink 240ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell {
+    animation: none !important;
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(4 11 18 / 72%);
+  z-index: 10;
+}
+
+.overlay-card {
+  width: min(28rem, 100%);
+  max-height: 100%;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.overlay-title {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.overlay-subtitle {
+  margin: 0.25rem 0 1rem;
+  color: var(--muted);
+}
+
+.overlay-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1.1rem;
+}
+
+.overlay-stats dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.overlay-stats dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.overlay-actions,
+.overlay-difficulties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.overlay-hint {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--accent);
+}
+
+.button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06202a;
+  font-weight: 700;
+}
+
+.button--ghost[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .fleet {
@@ -307,12 +556,17 @@ button.cell:not(:disabled):hover {
     padding: 0.6rem;
   }
 
-  .board-row {
-    grid-template-columns: 1.1rem repeat(10, 1fr);
-    gap: 1px;
+  .board {
+    --label-col: 1.1rem;
+    --cell-gap: 1px;
   }
 
   .fleet-item {
     gap: 0.35rem;
+  }
+
+  .legend-list {
+    gap: 0.3rem 0.7rem;
+    font-size: 0.72rem;
   }
 }

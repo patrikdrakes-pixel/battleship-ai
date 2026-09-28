@@ -9,6 +9,8 @@ export interface CellProps {
   readonly interactive: boolean;
   /** Part of a ship whose every cell has been hit. */
   readonly sunk?: boolean;
+  /** The most recent shot fired at this board. */
+  readonly last?: boolean;
   readonly disabled?: boolean;
   readonly onFire?: (coord: Coord) => void;
 }
@@ -24,12 +26,17 @@ export function Cell({
   revealShips,
   interactive,
   sunk = false,
+  last = false,
   disabled = false,
   onFire,
 }: CellProps) {
   const visible = visibleState(state, revealShips);
-  const className = `cell cell--${visible}${sunk ? ' cell--sunk' : ''}`;
-  const label = `${cellLabel(coord)} ${sunk ? 'sunk' : visible}`;
+  const className = `cell cell--${visible}${sunk ? ' cell--sunk' : ''}${
+    last ? ' cell--last' : ''
+  }`;
+  const label = `${cellLabel(coord)} ${sunk ? 'sunk' : visible}${
+    last ? ', latest shot' : ''
+  }`;
 
   if (!interactive) {
     return (
@@ -39,6 +46,7 @@ export function Cell({
         aria-label={label}
         data-state={visible}
         data-sunk={sunk}
+        data-last={last}
       />
     );
   }
@@ -51,6 +59,7 @@ export function Cell({
       aria-label={label}
       data-state={visible}
       data-sunk={sunk}
+      data-last={last}
       data-cell={cellLabel(coord)}
       data-fired={alreadyFired}
       disabled={disabled || alreadyFired}
