@@ -111,6 +111,93 @@ describe('App', () => {
     expect(enemyCells()[0].dataset.last).toBe('false');
   });
 
+  it('draws the player fleet as hulls and keeps enemy hulls hidden', () => {
+    render(<App seed={5} aiDelayMs={0} />);
+    const own = within(screen.getByTestId('player-board')).getByTestId('ship-layer');
+    expect(own.querySelectorAll('[data-ship]')).toHaveLength(5);
+    const enemy = within(screen.getByTestId('enemy-board')).getByTestId('ship-layer');
+    expect(enemy.querySelectorAll('[data-ship]')).toHaveLength(0);
+  });
+
+  it('draws an enemy hull once that ship is sunk', async () => {
+    const user = userEvent.setup();
+    const destroyer = newGame(5).ai.ships.find((ship) => ship.id === 'destroyer');
+    if (destroyer === undefined) throw new Error('missing destroyer');
+    const labels = shipCells(destroyer).map(cellLabel);
+
+    render(<App seed={5} aiDelayMs={0} />);
+    const enemyLayer = () =>
+      within(screen.getByTestId('enemy-board')).getByTestId('ship-layer');
+
+    for (const label of labels) {
+      const target = enemyCells().find((cell) => cell.dataset.cell === label);
+      if (target === undefined) throw new Error(`missing cell ${label}`);
+      await act(async () => {
+        await user.click(target);
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId('status')).toHaveTextContent('Your turn');
+      });
+    }
+
+    await waitFor(() => {
+      expect(enemyLayer().querySelectorAll('[data-ship="destroyer"]')).toHaveLength(1);
+    });
+    expect(enemyLayer().querySelectorAll('[data-ship]')).toHaveLength(1);
+  });
+
+  it('shows the end-game overlay with stats and restarts from it', async () => {
+    const user = userEvent.setup();
+    const targets = newGame(5).ai.ships.flatMap(shipCells).map(cellLabel);
+
+    render(<App seed={5} aiDelayMs={0} />);
+    for (const label of targets) {
+      const target = enemyCells().find((cell) => cell.dataset.cell === label);
+      if (target === undefined) throw new Error(`missing cell ${label}`);
+      await act(async () => {
+        await user.click(target);
+      });
+    }
+
+    await waitFor(() => {
+      expect(screen.getByTestId('game-over')).toHaveTextContent('Victory');
+    });
+    expect(screen.getByTestId('stat-shots')).toHaveTextContent('17');
+    expect(screen.getByTestId('stat-accuracy')).toHaveTextContent('100%');
+    expect(screen.getByTestId('stat-sunk')).toHaveTextContent('5/5');
+
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: 'Play again' }));
+    });
+    expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
+    expect(screen.getByTestId('status')).toHaveTextContent('Your turn');
+  });
+
+  it('can dismiss the overlay to review the revealed boards', async () => {
+    const user = userEvent.setup();
+    const targets = newGame(5).ai.ships.flatMap(shipCells).map(cellLabel);
+
+    render(<App seed={5} aiDelayMs={0} />);
+    for (const label of targets) {
+      const target = enemyCells().find((cell) => cell.dataset.cell === label);
+      if (target === undefined) throw new Error(`missing cell ${label}`);
+      await act(async () => {
+        await user.click(target);
+      });
+    }
+
+    await waitFor(() => {
+      expect(screen.getByTestId('game-over')).toBeInTheDocument();
+    });
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: 'Review the boards' }));
+    });
+
+    expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
+    const enemy = within(screen.getByTestId('enemy-board')).getByTestId('ship-layer');
+    expect(enemy.querySelectorAll('[data-ship]')).toHaveLength(5);
+  });
+
   it('offers the three difficulties and defaults to medium', () => {
     render(<App seed={5} aiDelayMs={0} />);
     const select = screen.getByTestId('difficulty');

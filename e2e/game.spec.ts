@@ -104,6 +104,31 @@ test('player can win by sinking the whole enemy fleet', async ({ page }) => {
   );
 });
 
+test('the end-game overlay reports the result and restarts the game', async ({
+  page,
+}) => {
+  await open(page, SEED);
+  const { enemyShipLabels } = layout(SEED);
+  for (const label of enemyShipLabels) await fireAt(page, label);
+
+  const overlay = page.getByTestId('game-over');
+  await expect(overlay).toContainText('Victory');
+  await expect(page.getByTestId('stat-shots')).toHaveText('17');
+  await expect(page.getByTestId('stat-accuracy')).toHaveText('100%');
+  await expect(page.getByTestId('stat-sunk')).toHaveText('5/5');
+  await expect(page.getByTestId('stat-difficulty')).toHaveText('Medium');
+
+  await page.getByRole('button', { name: 'Review the boards' }).click();
+  await expect(overlay).toBeHidden();
+  await expect(page.getByTestId('enemy-board').locator('[data-ship]')).toHaveCount(5);
+
+  await page.getByRole('button', { name: 'New game' }).click();
+  await expect(page.getByTestId('status')).toContainText('Your turn');
+  await expect(page.getByTestId('enemy-board').locator('[data-state="hit"]')).toHaveCount(
+    0,
+  );
+});
+
 test('player can lose when the AI destroys their fleet', async ({ page }) => {
   await open(page, SEED);
   const { enemyWaterLabels } = layout(SEED);
@@ -208,6 +233,23 @@ test('the legend names every shot state and the newest shot is marked', async ({
   await expect(page.getByTestId('enemy-board').locator('[data-last="true"]')).toHaveCount(
     1,
   );
+});
+
+test('hulls are drawn for the player fleet and for sunk enemy ships', async ({
+  page,
+}) => {
+  await open(page, SEED);
+  await expect(page.getByTestId('player-board').locator('[data-ship]')).toHaveCount(5);
+  await expect(page.getByTestId('enemy-board').locator('[data-ship]')).toHaveCount(0);
+
+  const destroyer = newGame(SEED).ai.ships.find((ship) => ship.id === 'destroyer');
+  if (destroyer === undefined) throw new Error('missing destroyer');
+  for (const label of shipCells(destroyer).map(cellLabel)) await fireAt(page, label);
+
+  await expect(
+    page.getByTestId('enemy-board').locator('[data-ship="destroyer"]'),
+  ).toHaveCount(1);
+  await expect(page.getByTestId('enemy-board').locator('[data-ship]')).toHaveCount(1);
 });
 
 test('new game resets the board', async ({ page }) => {
