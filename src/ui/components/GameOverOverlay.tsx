@@ -53,7 +53,14 @@ export function GameOverOverlay({
   );
 
   return (
-    <div className="overlay" data-testid="game-over">
+    <div
+      className="overlay"
+      data-testid="game-over"
+      onMouseDown={(event) => {
+        // Clicking the backdrop must not blur the dialog and escape the trap.
+        if (event.target === event.currentTarget) event.preventDefault();
+      }}
+    >
       <div
         className="overlay-card"
         role="dialog"
