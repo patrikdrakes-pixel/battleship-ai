@@ -421,6 +421,10 @@ button.cell:not(:disabled):hover {
   padding: 1.25rem;
 }
 
+.overlay-card:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .overlay-title {
   margin: 0;
   font-size: 1.6rem;

@@ -237,7 +237,9 @@ describe('App', () => {
     await act(async () => {
       await user.click(within(overlay).getByText('Shots fired'));
     });
-    expect(screen.getByRole('button', { name: 'Play again' })).toHaveFocus();
+    expect(within(overlay).getByRole('dialog')).toContainElement(
+      document.activeElement as HTMLElement,
+    );
 
     await act(async () => {
       await user.keyboard('{Escape}');

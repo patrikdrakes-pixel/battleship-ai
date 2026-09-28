@@ -57,11 +57,8 @@ export function GameOverOverlay({
       className="overlay"
       data-testid="game-over"
       onMouseDown={(event) => {
-        // Only the dialog buttons may take focus; anything else would blur out
-        // of the trap and send Escape to the body.
-        const target = event.target;
-        if (!(target instanceof HTMLElement) || target.closest('button') === null)
-          event.preventDefault();
+        // Clicking the backdrop must not blur the dialog and escape the trap.
+        if (event.target === event.currentTarget) event.preventDefault();
       }}
     >
       <div
@@ -70,6 +67,9 @@ export function GameOverOverlay({
         aria-modal="true"
         aria-labelledby="game-over-title"
         ref={card}
+        // Clicking dialog text focuses the card itself, so Escape and the tab
+        // trap keep working without suppressing text selection.
+        tabIndex={-1}
         onKeyDown={onKeyDown}
       >
         <h2 className="overlay-title" id="game-over-title">
