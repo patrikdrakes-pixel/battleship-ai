@@ -235,6 +235,11 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Play again' })).toHaveFocus();
 
     await act(async () => {
+      await user.click(within(overlay).getByText('Shots fired'));
+    });
+    expect(screen.getByRole('button', { name: 'Play again' })).toHaveFocus();
+
+    await act(async () => {
       await user.keyboard('{Escape}');
     });
     expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
