@@ -74,6 +74,43 @@ describe('App', () => {
     });
   });
 
+  it('explains every shot state in the legend', () => {
+    render(<App seed={5} aiDelayMs={0} />);
+    const legend = screen.getByTestId('legend');
+    expect(
+      within(legend)
+        .getAllByRole('listitem')
+        .map((i) => i.textContent),
+    ).toEqual(['Untouched', 'Miss', 'Hit', 'Sunk']);
+  });
+
+  it('marks only the newest shot on each board', async () => {
+    const user = userEvent.setup();
+    render(<App seed={5} aiDelayMs={0} />);
+
+    await act(async () => {
+      await user.click(enemyCells()[0]);
+    });
+    await waitFor(() => {
+      expect(enemyCells()[0].dataset.last).toBe('true');
+    });
+    await waitFor(() => {
+      expect(
+        within(screen.getByTestId('player-board'))
+          .getAllByRole('img')
+          .filter((cell) => cell.dataset.last === 'true'),
+      ).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await user.click(enemyCells()[1]);
+    });
+    await waitFor(() => {
+      expect(enemyCells()[1].dataset.last).toBe('true');
+    });
+    expect(enemyCells()[0].dataset.last).toBe('false');
+  });
+
   it('offers the three difficulties and defaults to medium', () => {
     render(<App seed={5} aiDelayMs={0} />);
     const select = screen.getByTestId('difficulty');

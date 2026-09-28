@@ -245,6 +245,104 @@ button.cell:not(:disabled):hover {
   color: #ffe6e2;
 }
 
+/* The newest shot on each board, so the shot log and the grid line up. */
+.cell--last {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.legend {
+  margin: 0 0 1.25rem;
+}
+
+.legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  aspect-ratio: auto;
+  flex: none;
+  animation: none;
+}
+
+.legend-swatch::after {
+  font-size: 0.6rem;
+}
+
+/* Motion is decoration only: every animated rule below is skipped under
+   `prefers-reduced-motion`, and no state depends on an animation finishing. */
+@keyframes splash {
+  from {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes impact {
+  0% {
+    transform: scale(0.7);
+    filter: brightness(2.2);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes sink {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.cell--miss {
+  animation: splash 200ms ease-out;
+}
+
+.cell--hit {
+  animation: impact 220ms ease-out;
+}
+
+.cell--sunk {
+  animation: sink 240ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell {
+    animation: none !important;
+  }
+}
+
 .fleet {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -314,5 +412,10 @@ button.cell:not(:disabled):hover {
 
   .fleet-item {
     gap: 0.35rem;
+  }
+
+  .legend-list {
+    gap: 0.3rem 0.7rem;
+    font-size: 0.72rem;
   }
 }

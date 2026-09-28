@@ -10,6 +10,8 @@ export interface BoardProps {
   readonly revealShips: boolean;
   readonly interactive: boolean;
   readonly disabled?: boolean;
+  /** Cell of the most recent shot fired at this board, highlighted for context. */
+  readonly lastShot?: Coord;
   readonly onFire?: (coord: Coord) => void;
 }
 
@@ -19,9 +21,11 @@ export function Board({
   revealShips,
   interactive,
   disabled,
+  lastShot,
   onFire,
 }: BoardProps) {
   const sunkCells = new Set(board.ships.filter(isSunk).flatMap(shipCells).map(coordKey));
+  const lastKey = lastShot === undefined ? null : coordKey(lastShot);
 
   return (
     <section className="board-panel" aria-label={title}>
@@ -48,6 +52,7 @@ export function Board({
                 revealShips={revealShips}
                 interactive={interactive}
                 sunk={sunkCells.has(coordKey({ r, c }))}
+                last={lastKey === coordKey({ r, c })}
                 disabled={disabled}
                 onFire={onFire}
               />

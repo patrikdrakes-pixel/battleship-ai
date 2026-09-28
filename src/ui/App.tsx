@@ -2,6 +2,7 @@ import type { Difficulty } from '../engine/types';
 import { Board } from './components/Board';
 import { DifficultySelect } from './components/DifficultySelect';
 import { FleetStatus } from './components/FleetStatus';
+import { Legend } from './components/Legend';
 import { NewGameButton } from './components/NewGameButton';
 import { StatusBanner } from './components/StatusBanner';
 import { useGame } from './hooks/useGame';
@@ -21,6 +22,8 @@ export function App({ seed, aiDelayMs, difficulty }: AppProps) {
     difficulty,
   });
   const playerTurn = state.phase === 'playing' && state.turn === 'player';
+  const lastPlayerShot = state.playerShots.at(-1)?.coord;
+  const lastAiShot = state.aiShots.at(-1)?.coord;
 
   return (
     <main className="app">
@@ -34,6 +37,8 @@ export function App({ seed, aiDelayMs, difficulty }: AppProps) {
 
       <StatusBanner state={state} />
 
+      <Legend />
+
       <div className="boards">
         <div className="board-column">
           <Board
@@ -42,6 +47,7 @@ export function App({ seed, aiDelayMs, difficulty }: AppProps) {
             revealShips={state.phase !== 'playing'}
             interactive
             disabled={!playerTurn}
+            lastShot={lastPlayerShot}
             onFire={fire}
           />
           <FleetStatus
@@ -56,6 +62,7 @@ export function App({ seed, aiDelayMs, difficulty }: AppProps) {
             board={state.player}
             revealShips
             interactive={false}
+            lastShot={lastAiShot}
           />
           <FleetStatus title="Your fleet" board={state.player} revealDamage />
         </div>

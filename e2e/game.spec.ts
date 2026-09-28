@@ -185,6 +185,31 @@ test('shot states are visually distinct', async ({ page }) => {
   expect(new Set([untouched, miss, hit]).size).toBe(3);
 });
 
+test('the legend names every shot state and the newest shot is marked', async ({
+  page,
+}) => {
+  await open(page, SEED);
+  await expect(page.getByTestId('legend').getByRole('listitem')).toHaveText([
+    'Untouched',
+    'Miss',
+    'Hit',
+    'Sunk',
+  ]);
+
+  const { enemyWaterLabels } = layout(SEED);
+  await fireAt(page, enemyWaterLabels[0]);
+  await expect(enemyCell(page, enemyWaterLabels[0])).toHaveAttribute('data-last', 'true');
+  await expect(
+    page.getByTestId('player-board').locator('[data-last="true"]'),
+  ).toHaveCount(1);
+
+  await fireAt(page, enemyWaterLabels[1]);
+  await expect(enemyCell(page, enemyWaterLabels[1])).toHaveAttribute('data-last', 'true');
+  await expect(page.getByTestId('enemy-board').locator('[data-last="true"]')).toHaveCount(
+    1,
+  );
+});
+
 test('new game resets the board', async ({ page }) => {
   await open(page, SEED);
   const { enemyWaterLabels } = layout(SEED);

@@ -4,7 +4,9 @@ A small Battleship game played in the browser against a hunt/target AI opponent.
 React + TypeScript + Vite, with the game rules implemented as a framework-free engine.
 
 - 10×10 boards, standard fleet (5, 4, 3, 3, 2), random legal placement
-- Click an enemy cell to fire; hit / miss / sunk / win / loss are all shown
+- Click an enemy cell to fire; hit / miss / sunk / win / loss are all shown, with a
+  board legend, a ring on the newest shot of each board, and brief shot animations
+  (suppressed under `prefers-reduced-motion`)
 - The AI replies after every player shot and never fires at a cell twice
 - New Game restarts at any time; games are reproducible with `?seed=`
 - Easy / Medium / Hard AI difficulty, selectable at any time
