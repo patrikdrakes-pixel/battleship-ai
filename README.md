@@ -9,6 +9,8 @@ React + TypeScript + Vite, with the game rules implemented as a framework-free e
   board legend, a ring on the newest shot of each board, and brief shot animations
   (suppressed under `prefers-reduced-motion`)
 - The AI replies after every player shot and never fires at a cell twice
+- When the game ends an overlay reports the result, shots, accuracy, ships sunk and
+  lost, and offers Play again, a difficulty switch, or dismissal to review the boards
 - New Game restarts at any time; games are reproducible with `?seed=`
 - Easy / Medium / Hard AI difficulty, selectable at any time
 
