@@ -210,6 +210,23 @@ test('the legend names every shot state and the newest shot is marked', async ({
   );
 });
 
+test('hulls are drawn for the player fleet and for sunk enemy ships', async ({
+  page,
+}) => {
+  await open(page, SEED);
+  await expect(page.getByTestId('player-board').locator('[data-ship]')).toHaveCount(5);
+  await expect(page.getByTestId('enemy-board').locator('[data-ship]')).toHaveCount(0);
+
+  const destroyer = newGame(SEED).ai.ships.find((ship) => ship.id === 'destroyer');
+  if (destroyer === undefined) throw new Error('missing destroyer');
+  for (const label of shipCells(destroyer).map(cellLabel)) await fireAt(page, label);
+
+  await expect(
+    page.getByTestId('enemy-board').locator('[data-ship="destroyer"]'),
+  ).toHaveCount(1);
+  await expect(page.getByTestId('enemy-board').locator('[data-ship]')).toHaveCount(1);
+});
+
 test('new game resets the board', async ({ page }) => {
   await open(page, SEED);
   const { enemyWaterLabels } = layout(SEED);
