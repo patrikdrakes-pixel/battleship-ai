@@ -146,6 +146,58 @@ describe('App', () => {
     expect(enemyLayer().querySelectorAll('[data-ship]')).toHaveLength(1);
   });
 
+  it('shows the end-game overlay with stats and restarts from it', async () => {
+    const user = userEvent.setup();
+    const targets = newGame(5).ai.ships.flatMap(shipCells).map(cellLabel);
+
+    render(<App seed={5} aiDelayMs={0} />);
+    for (const label of targets) {
+      const target = enemyCells().find((cell) => cell.dataset.cell === label);
+      if (target === undefined) throw new Error(`missing cell ${label}`);
+      await act(async () => {
+        await user.click(target);
+      });
+    }
+
+    await waitFor(() => {
+      expect(screen.getByTestId('game-over')).toHaveTextContent('Victory');
+    });
+    expect(screen.getByTestId('stat-shots')).toHaveTextContent('17');
+    expect(screen.getByTestId('stat-accuracy')).toHaveTextContent('100%');
+    expect(screen.getByTestId('stat-sunk')).toHaveTextContent('5/5');
+
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: 'Play again' }));
+    });
+    expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
+    expect(screen.getByTestId('status')).toHaveTextContent('Your turn');
+  });
+
+  it('can dismiss the overlay to review the revealed boards', async () => {
+    const user = userEvent.setup();
+    const targets = newGame(5).ai.ships.flatMap(shipCells).map(cellLabel);
+
+    render(<App seed={5} aiDelayMs={0} />);
+    for (const label of targets) {
+      const target = enemyCells().find((cell) => cell.dataset.cell === label);
+      if (target === undefined) throw new Error(`missing cell ${label}`);
+      await act(async () => {
+        await user.click(target);
+      });
+    }
+
+    await waitFor(() => {
+      expect(screen.getByTestId('game-over')).toBeInTheDocument();
+    });
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: 'Review the boards' }));
+    });
+
+    expect(screen.queryByTestId('game-over')).not.toBeInTheDocument();
+    const enemy = within(screen.getByTestId('enemy-board')).getByTestId('ship-layer');
+    expect(enemy.querySelectorAll('[data-ship]')).toHaveLength(5);
+  });
+
   it('offers the three difficulties and defaults to medium', () => {
     render(<App seed={5} aiDelayMs={0} />);
     const select = screen.getByTestId('difficulty');
