@@ -241,6 +241,18 @@ describe('App', () => {
       document.activeElement as HTMLElement,
     );
 
+    // Tabbing away from the card must re-enter the buttons, not the page behind.
+    await act(async () => {
+      await user.tab({ shift: true });
+    });
+    expect(buttons[buttons.length - 1]).toHaveFocus();
+
+    await act(async () => {
+      await user.click(within(overlay).getByText('Shots fired'));
+      await user.tab();
+    });
+    expect(buttons[0]).toHaveFocus();
+
     await act(async () => {
       await user.keyboard('{Escape}');
     });
