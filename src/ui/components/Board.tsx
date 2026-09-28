@@ -44,8 +44,11 @@ export function Board({
         </div>
         <div className="board-grid">
           <ShipLayer ships={visibleShips} />
+          {/* Rows carry no grid ARIA: without roving-tabindex grid navigation
+              it would only break the required grid > row > gridcell structure.
+              Each cell announces its own coordinate instead. */}
           {board.grid.map((row, r) => (
-            <div key={r} className="board-row" role="row">
+            <div key={r} className="board-row">
               <div className="board-label" aria-hidden="true">
                 {r + 1}
               </div>
