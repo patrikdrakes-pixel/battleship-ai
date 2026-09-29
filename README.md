@@ -155,7 +155,11 @@ and `npm audit` on every pull request; CodeQL and Dependabot run alongside it.
 - Vercel's included Observability provides deployment, traffic and hosting diagnostics.
 - Sentry captures browser errors only when `VITE_SENTRY_DSN` is configured. Default PII
   collection and performance tracing are disabled; Session Replay is not enabled.
-- One Sentry uptime monitor checks the production URL every five minutes.
+- `VITE_SENTRY_ENVIRONMENT` labels the events; without it the Vite mode is used, which is
+  `production` for preview builds too. Set it to `preview` on Vercel preview deployments.
+- One Sentry uptime monitor checks the production URL every five minutes. It is created in
+  Sentry (Alerts → Uptime Monitors) against `https://battleship-ai.vercel.app/`, not from
+  this repository.
 - Source-map upload is intentionally not configured, so no Sentry auth token is needed.
 - The setup uses the Vercel Hobby and Sentry Developer free tiers. Observability Plus,
   Sentry PAYG and other usage-based add-ons are not enabled.
