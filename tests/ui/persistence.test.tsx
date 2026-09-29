@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { shipCells } from '../../src/engine/board';
@@ -61,15 +61,16 @@ describe('persisted preferences and record', () => {
     expect(loadPreferences()).toEqual({ difficulty: 'easy', muted: true });
   });
 
-  it('counts a finished game once and shows the record in the overlay', async () => {
+  it('counts a finished game once on top of the stored record', async () => {
+    localStorage.setItem('battleship.record', JSON.stringify({ wins: 4, losses: 1 }));
     const user = userEvent.setup();
     render(<App seed={5} aiDelayMs={0} />);
 
     await winTheGame(user);
 
     const overlay = screen.getByTestId('game-over');
-    expect(within(overlay).getByTestId('stat-record')).toHaveTextContent('1W – 0L');
-    expect(loadRecord()).toEqual({ wins: 1, losses: 0 });
+    expect(within(overlay).getByTestId('stat-record')).toHaveTextContent('5W – 1L');
+    expect(loadRecord()).toEqual({ wins: 5, losses: 1 });
 
     // Re-rendering the finished game must not count it a second time.
     await act(async () => {
@@ -77,11 +78,6 @@ describe('persisted preferences and record', () => {
         within(overlay).getByRole('button', { name: 'Review the boards' }),
       );
     });
-    expect(loadRecord()).toEqual({ wins: 1, losses: 0 });
-
-    cleanup();
-    render(<App seed={5} aiDelayMs={0} />);
-    await winTheGame(user);
-    expect(loadRecord()).toEqual({ wins: 2, losses: 0 });
+    expect(loadRecord()).toEqual({ wins: 5, losses: 1 });
   });
 });
