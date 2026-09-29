@@ -144,3 +144,21 @@ to`: after a hit on a carrier cell all five enemy entries still read `AFLOAT` an
 - **Verification.** New unit test "keeps both axes alive when each fits the sunk ship
   exactly" in `tests/engine/ai.test.ts`; the existing ambiguity, sink-retirement and fuzz
   tests still pass (69 unit tests, 18 Playwright tests).
+
+## 11. The boards claimed ARIA grid semantics they did not implement
+
+- **Symptom.** An axe-core scan of the production build reported two critical violations
+  on every page state, desktop and mobile: `aria-required-children` and
+  `aria-required-parent`.
+- **Root cause.** Each board row carried `role="row"`, but its container was a plain
+  `div` and the cells were buttons / `role="img"`. ARIA requires `row` to sit inside a
+  `grid`/`table` and to contain `gridcell`/`cell` children, so assistive technology saw a
+  broken structure.
+- **Fix.** Removed `role="row"` rather than completing the grid contract: a real ARIA
+  grid also promises roving-tabindex arrow-key navigation, which the game does not
+  implement. Every cell already announces its own coordinate and state
+  (`"B7, unexplored"`), so no information is lost.
+- **Verification.** New `e2e/a11y.spec.ts` runs axe-core (WCAG 2.1 A/AA) against the fresh
+  board and the finished game with its overlay, on desktop and mobile — 0 violations,
+  and the four checks fail against the previous markup. 78 unit and 28 Playwright tests
+  pass.

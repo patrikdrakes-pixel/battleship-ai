@@ -37,8 +37,9 @@ src/
       index.ts         DIFFICULTIES and createAi(difficulty, rng)
   ui/
     hooks/useGame.ts   useReducer(gameReducer) + cosmetic AI delay
-    components/        Board, Cell, FleetStatus, NewGameButton, StatusBanner
-    App.tsx, labels.ts, styles/app.css
+    components/        Board, Cell, ShipLayer, Legend, FleetStatus, StatusBanner,
+                       DifficultySelect, NewGameButton, GameOverOverlay
+    App.tsx, labels.ts, stats.ts, styles/app.css
   main.tsx             entry point, parses ?seed=, ?delay= and ?difficulty=
 ```
 
@@ -132,6 +133,19 @@ What is covered:
   shots and consistent boards.
 - **UI** (`tests/ui/app.test.tsx`) and **E2E** (`e2e/game.spec.ts`): rendering, hidden
   enemy fleet, click-to-fire, a full win, a full loss, and New Game.
+- **Accessibility** (`e2e/a11y.spec.ts`): axe-core scans of the fresh board and of the
+  finished game with its overlay, on desktop and mobile, asserting zero WCAG 2.1 A/AA
+  violations.
+
+## Accessibility
+
+Enemy cells are real `<button>`s labelled `"B7, unexplored"` / `"hit"` / `"sunk"` and
+disabled once fired; the player board renders `role="img"` cells with the same labels, and
+the SVG hull layer is `aria-hidden`. The boards deliberately use no `grid`/`row` ARIA —
+that contract requires roving-tabindex arrow-key navigation, which the game does not
+implement. The end-game overlay is a modal dialog (`aria-modal`, labelled by its title)
+that takes focus, traps Tab / Shift+Tab, and closes on Escape while its stats stay
+selectable. Shot animations are suppressed under `prefers-reduced-motion`.
 
 CI (`.github/workflows/ci.yml`) runs lint, format, typecheck, coverage, build, Playwright
 and `npm audit` on every pull request; CodeQL and Dependabot run alongside it.
