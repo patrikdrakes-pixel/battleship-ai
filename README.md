@@ -150,11 +150,22 @@ selectable. Shot animations are suppressed under `prefers-reduced-motion`.
 CI (`.github/workflows/ci.yml`) runs lint, format, typecheck, coverage, build, Playwright
 and `npm audit` on every pull request; CodeQL and Dependabot run alongside it.
 
+## Monitoring
+
+- Vercel's included Observability provides deployment, traffic and hosting diagnostics.
+- Sentry captures browser errors only when `VITE_SENTRY_DSN` is configured. Default PII
+  collection and performance tracing are disabled; Session Replay is not enabled.
+- One Sentry uptime monitor checks the production URL every five minutes.
+- Source-map upload is intentionally not configured, so no Sentry auth token is needed.
+- The setup uses the Vercel Hobby and Sentry Developer free tiers. Observability Plus,
+  Sentry PAYG and other usage-based add-ons are not enabled.
+
 ## Deployment
 
 The app is a static SPA deployed to Vercel. `vercel.json` pins the build
 (`npm ci` / `npm run build` / `dist`) and sets security headers (strict CSP with no inline
-scripts, `nosniff`, `frame-ancestors 'none'`, HSTS, restrictive Permissions-Policy).
+scripts, a narrowly scoped Sentry ingest connection, `nosniff`, `frame-ancestors 'none'`,
+HSTS, restrictive Permissions-Policy).
 
 ```bash
 npx vercel            # preview deployment
@@ -166,12 +177,13 @@ and production deployments from `main` with no extra configuration.
 
 ## Security notes
 
-- No backend, no network calls, no user data storage — the whole game runs client-side.
+- No backend or user data storage; game state remains entirely client-side. The only
+  optional application network traffic is browser error reporting to Sentry.
 - No `dangerouslySetInnerHTML`; all rendering goes through React escaping.
 - The only untrusted input is the `?seed=` / `?delay=` / `?difficulty=` query string, validated against
   `^\d{1,10}$` and `Number.isSafeInteger` before use.
-- Dependencies are dev-only apart from React; `npm audit` gates CI and Dependabot keeps
-  updates flowing.
+- Runtime dependencies are React and the Sentry browser SDK; `npm audit` gates CI and
+  Dependabot keeps updates flowing.
 
 See [BUGS.md](./BUGS.md) for defects found during development and [PLAN.md](./PLAN.md) for
 the original design notes.

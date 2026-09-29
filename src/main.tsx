@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DIFFICULTIES } from './engine/ai';
 import type { Difficulty } from './engine/types';
+import { initMonitoring } from './monitoring';
 import { App } from './ui/App';
 
 /** Only non-negative integers are accepted, so `?seed=` cannot inject anything. */
@@ -19,6 +20,8 @@ export function parseDifficultyParam(raw: string | null): Difficulty | undefined
 const params = new URLSearchParams(window.location.search);
 const root = document.getElementById('root');
 if (root === null) throw new Error('Root element not found');
+
+initMonitoring();
 
 createRoot(root).render(
   <StrictMode>
