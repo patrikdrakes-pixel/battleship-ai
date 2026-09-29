@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Board as BoardModel, Difficulty } from '../engine/types';
 import { Board } from './components/Board';
 import { DifficultySelect } from './components/DifficultySelect';
@@ -10,8 +10,10 @@ import { NewGameButton } from './components/NewGameButton';
 import { PlacementScreen } from './components/PlacementScreen';
 import { StatusBanner } from './components/StatusBanner';
 import { useGame } from './hooks/useGame';
+import { useMatchRecord } from './hooks/useMatchRecord';
 import { useSound } from './hooks/useSound';
 import type { SoundPlayer } from './sound';
+import { loadPreferences, savePreferences } from './storage';
 import './styles/app.css';
 
 export interface AppProps {
@@ -24,16 +26,22 @@ export interface AppProps {
 }
 
 export function App({ seed, aiDelayMs, difficulty, soundPlayer }: AppProps) {
+  const [stored] = useState(loadPreferences);
   const { state, fire, restart, startWith, selectDifficulty } = useGame({
     seed,
     aiDelayMs,
-    difficulty,
+    difficulty: difficulty ?? stored.difficulty ?? undefined,
   });
   const [reviewing, setReviewing] = useState(false);
   const [placing, setPlacing] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(stored.muted);
 
   useSound(state, muted, soundPlayer);
+  const record = useMatchRecord(state);
+
+  useEffect(() => {
+    savePreferences({ difficulty: state.difficulty, muted });
+  }, [state.difficulty, muted]);
 
   const playAgain = useCallback(() => {
     setReviewing(false);
@@ -128,6 +136,7 @@ export function App({ seed, aiDelayMs, difficulty, soundPlayer }: AppProps) {
       {state.phase !== 'playing' && !reviewing && !placing && (
         <GameOverOverlay
           state={state}
+          record={record}
           onPlayAgain={playAgain}
           onSelectDifficulty={changeDifficulty}
           onDismiss={() => setReviewing(true)}
