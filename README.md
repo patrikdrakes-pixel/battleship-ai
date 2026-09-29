@@ -115,7 +115,8 @@ npm test             # Vitest unit + component tests
 npm run test:coverage# same with V8 coverage thresholds on src/engine
 npm run build        # typecheck + production build
 npm run e2e:install  # one-off: Playwright browsers
-npm run e2e          # Playwright, desktop + mobile viewport
+npm run e2e          # Playwright, desktop + mobile viewport (skips @visual)
+npm run e2e:visual:docker  # visual regression in the pinned Playwright image
 ```
 
 What is covered:
@@ -133,6 +134,12 @@ What is covered:
   shots and consistent boards.
 - **UI** (`tests/ui/app.test.tsx`) and **E2E** (`e2e/game.spec.ts`): rendering, hidden
   enemy fleet, click-to-fire, a full win, a full loss, and New Game.
+- **Visual regression** (`e2e/visual.spec.ts`): screenshots of a fresh board, the
+  miss/hit/sunk states and the end-game overlay, desktop and mobile. Pixel output depends
+  on the OS font stack, so these run only inside `mcr.microsoft.com/playwright:<version>`
+  — locally via `npm run e2e:visual:docker`, in CI as the "Visual regression" job. Append
+  `-- --update-snapshots` to the docker script to re-record after an intended restyle, and
+  keep the image tag in sync with `@playwright/test`.
 - **Accessibility** (`e2e/a11y.spec.ts`): axe-core scans of the fresh board and of the
   finished game with its overlay, on desktop and mobile, asserting zero WCAG 2.1 A/AA
   violations.
