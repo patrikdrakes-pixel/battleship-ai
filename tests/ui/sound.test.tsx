@@ -1,6 +1,8 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { shipCells } from '../../src/engine/board';
+import { newGame } from '../../src/engine/game';
 import { App } from '../../src/ui/App';
 import type { SoundName, SoundPlayer } from '../../src/ui/sound';
 import { createSoundPlayer } from '../../src/ui/sound';
@@ -41,6 +43,10 @@ const ALL_CELLS = Array.from({ length: 100 }, (_, index) => {
   const column = COLUMNS[index % 10];
   return `${column}${Math.floor(index / 10) + 1}`;
 });
+
+function cellLabel({ r, c }: { r: number; c: number }): string {
+  return `${COLUMNS[c]}${r + 1}`;
+}
 
 describe('sound effects', () => {
   it('plays a blip for the outcome of each shot', async () => {
@@ -87,21 +93,21 @@ describe('sound effects', () => {
     expect(toggle).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('plays a closing fanfare matching the result', async () => {
+  it('plays the victory fanfare when the player wins', async () => {
     const user = userEvent.setup();
     const { player, played } = recorder();
-    render(<App seed={7} aiDelayMs={0} soundPlayer={player} />);
+    render(<App seed={5} aiDelayMs={0} soundPlayer={player} />);
 
-    for (const label of ALL_CELLS) {
+    for (const label of newGame(5).ai.ships.flatMap(shipCells).map(cellLabel)) {
       if (screen.queryByTestId('game-over') !== null) break;
       await act(async () => {
         await user.click(enemyCell(label));
       });
     }
 
-    const overlay = screen.getByTestId('game-over');
-    const won = within(overlay).queryByText('Victory') !== null;
-    expect(played.at(-1)).toBe(won ? 'win' : 'loss');
+    expect(within(screen.getByTestId('game-over')).getByText('Victory')).toBeVisible();
+    expect(played).toContain('sunk');
+    expect(played.at(-1)).toBe('win');
   });
 });
 
