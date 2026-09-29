@@ -73,3 +73,16 @@ test('end-game overlay @visual', async ({ page }) => {
   await expect(overlay).toContainText('Victory');
   await expect(overlay).toHaveScreenshot('game-over.png');
 });
+
+test('placement screen with a preview @visual', async ({ page }) => {
+  await open(page);
+  await page.getByTestId('place-ships').click();
+  const board = page.getByTestId('placement-board');
+  await expect(board).toBeVisible();
+  await board.locator('[data-cell="C4"]').hover();
+  await expect(board.locator('[data-cell="C4"]')).toHaveAttribute(
+    'data-preview',
+    'legal',
+  );
+  await expect(page).toHaveScreenshot('placement.png', { fullPage: true });
+});

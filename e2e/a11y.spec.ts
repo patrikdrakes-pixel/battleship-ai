@@ -30,3 +30,12 @@ test('the finished game and its overlay have no accessibility violations', async
   await expect(page.getByTestId('game-over')).toBeVisible();
   expect(await scan(page)).toEqual([]);
 });
+
+test('the placement screen has no accessibility violations', async ({ page }) => {
+  await page.goto(`/?seed=${SEED}&delay=0`);
+  await page.getByTestId('place-ships').click();
+  await expect(page.getByTestId('placement-board')).toBeVisible();
+  expect(await scan(page)).toEqual([]);
+  await page.getByRole('button', { name: 'Random fleet' }).click();
+  expect(await scan(page)).toEqual([]);
+});
