@@ -36,15 +36,20 @@ export function GameOverOverlay({
       }
       if (event.key !== 'Tab' || card.current === null) return;
 
-      const buttons = card.current.querySelectorAll<HTMLButtonElement>('button');
+      const buttons = Array.from(
+        card.current.querySelectorAll<HTMLButtonElement>('button'),
+      );
       const first = buttons[0];
       const last = buttons[buttons.length - 1];
       if (first === undefined || last === undefined) return;
 
-      if (event.shiftKey && document.activeElement === first) {
+      // Tabbing off either end wraps; tabbing from the card itself (focused by
+      // clicking dialog text) enters the button ring rather than leaving it.
+      const onButton = buttons.some((button) => button === document.activeElement);
+      if (event.shiftKey && (!onButton || document.activeElement === first)) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && (!onButton || document.activeElement === last)) {
         event.preventDefault();
         first.focus();
       }
@@ -67,6 +72,9 @@ export function GameOverOverlay({
         aria-modal="true"
         aria-labelledby="game-over-title"
         ref={card}
+        // Clicking dialog text focuses the card itself, so Escape and the tab
+        // trap keep working without suppressing text selection.
+        tabIndex={-1}
         onKeyDown={onKeyDown}
       >
         <h2 className="overlay-title" id="game-over-title">
