@@ -15,8 +15,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
+    "e2e": "playwright test --grep-invert @visual",
+    "e2e:install": "playwright install --with-deps chromium",
+    "e2e:visual": "playwright test --grep @visual",
+    "e2e:visual:docker": "docker run --rm --ipc=host -v \"$PWD\":/work -w /work -u $(id -u):$(id -g) -e HOME=/tmp mcr.microsoft.com/playwright:v1.63.0-noble npm run e2e:visual --"
   },
   "dependencies": {
     "@sentry/react": "10.75.1",
