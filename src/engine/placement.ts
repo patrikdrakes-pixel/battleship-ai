@@ -1,5 +1,6 @@
-import { canPlace, createEmptyBoard, placeShip } from './board';
+import { canPlace, createEmptyBoard, placeShip, shipCells } from './board';
 import { BOARD_SIZE, FLEET } from './constants';
+import type { FleetEntry } from './constants';
 import type { Rng } from './rng';
 import type { Board, Orientation } from './types';
 
@@ -35,4 +36,44 @@ function tryPlaceFleet(rng: Rng): Board | null {
     if (!placed) return null;
   }
   return board;
+}
+
+/** Fleet entries still missing from `board`, in canonical fleet order. */
+export function remainingFleet(board: Board): readonly FleetEntry[] {
+  return FLEET.filter((entry) => !board.ships.some((ship) => ship.id === entry.id));
+}
+
+export function isFleetComplete(board: Board): boolean {
+  return remainingFleet(board).length === 0;
+}
+
+/**
+ * Guards a board that did not come from `randomPlacement` (a manual layout
+ * arriving from the UI): the fleet must be complete, correctly sized, in
+ * bounds, non-overlapping and unfired.
+ */
+export function assertPlaceableFleet(board: Board): void {
+  if (board.ships.length !== FLEET.length) {
+    throw new Error(`Expected ${FLEET.length} ships, got ${board.ships.length}`);
+  }
+  for (const entry of FLEET) {
+    const ship = board.ships.find((candidate) => candidate.id === entry.id);
+    if (ship === undefined) throw new Error(`Missing ship ${entry.id}`);
+    if (ship.size !== entry.size) {
+      throw new Error(`Ship ${entry.id} has size ${ship.size}, expected ${entry.size}`);
+    }
+    if (ship.hits !== 0) throw new Error(`Ship ${entry.id} is already damaged`);
+    for (const cell of shipCells(ship)) {
+      if (board.shipAt[cell.r]?.[cell.c] !== entry.id) {
+        throw new Error(`Ship ${entry.id} is out of bounds or overlapping`);
+      }
+    }
+  }
+  for (const row of board.grid) {
+    for (const state of row) {
+      if (state !== 'empty' && state !== 'ship') {
+        throw new Error('Board has already been fired at');
+      }
+    }
+  }
 }
