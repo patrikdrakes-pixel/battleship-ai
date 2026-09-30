@@ -24,30 +24,32 @@ export function useSound(state: GameState, muted: boolean, player?: SoundPlayer)
   const playerRef = useRef<SoundPlayer | null>(null);
   playerRef.current ??= player ?? createSoundPlayer();
 
-  const shotCount = state.playerShots.length + state.aiShots.length;
-  const seen = useRef(shotCount);
+  const playerCount = state.playerShots.length;
+  const aiCount = state.aiShots.length;
+  const seen = useRef({ player: playerCount, ai: aiCount });
   const lastPhase = useRef(state.phase);
 
   useEffect(() => {
     const active = playerRef.current;
     if (active === null) return;
 
-    const fresh = shotCount > seen.current;
-    seen.current = shotCount;
+    const newest =
+      playerCount > seen.current.player
+        ? state.playerShots.at(-1)
+        : aiCount > seen.current.ai
+          ? state.aiShots.at(-1)
+          : undefined;
+    seen.current = { player: playerCount, ai: aiCount };
     const phaseChanged = state.phase !== lastPhase.current;
     lastPhase.current = state.phase;
 
     if (muted) return;
-    if (phaseChanged && state.phase !== 'playing') {
-      active.play(state.phase === 'playerWon' ? 'win' : 'loss');
-      return;
-    }
-    if (!fresh) return;
-    const newest =
-      state.turn === 'player' ? state.aiShots.at(-1) : state.playerShots.at(-1);
     const sound = outcomeSound(newest);
     if (sound !== null) active.play(sound);
-  }, [shotCount, state.phase, state.turn, state.playerShots, state.aiShots, muted]);
+    if (phaseChanged && state.phase !== 'playing') {
+      active.play(state.phase === 'playerWon' ? 'win' : 'loss');
+    }
+  }, [playerCount, aiCount, state.phase, state.playerShots, state.aiShots, muted]);
 
   useEffect(() => () => playerRef.current?.close(), []);
 }

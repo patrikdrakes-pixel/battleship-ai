@@ -106,8 +106,7 @@ describe('sound effects', () => {
     }
 
     expect(within(screen.getByTestId('game-over')).getByText('Victory')).toBeVisible();
-    expect(played).toContain('sunk');
-    expect(played.at(-1)).toBe('win');
+    expect(played.slice(-2)).toEqual(['sunk', 'win']);
   });
 });
 
@@ -165,5 +164,28 @@ describe('createSoundPlayer', () => {
       throw new Error('blocked');
     });
     expect(() => broken.play('win')).not.toThrow();
+  });
+
+  it('swallows a rejected resume from a blocked context', async () => {
+    const rejected = Promise.reject(new Error('blocked'));
+    const attached = vi.spyOn(rejected, 'catch');
+    const resume = vi.fn(() => rejected);
+    const context = {
+      currentTime: 0,
+      state: 'suspended',
+      destination: {},
+      createOscillator: vi.fn(() => {
+        throw new Error('not allowed');
+      }),
+      createGain: vi.fn(),
+      close: vi.fn(),
+      resume,
+    } as unknown as AudioContext;
+
+    createSoundPlayer(() => context).play('hit');
+
+    expect(resume).toHaveBeenCalled();
+    expect(attached).toHaveBeenCalled();
+    await expect(rejected.catch(() => 'handled')).resolves.toBe('handled');
   });
 });

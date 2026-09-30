@@ -56,7 +56,9 @@ export function createSoundPlayer(
 
   function ensureContext(): AudioContext | null {
     if (context === null) context = createContext();
-    if (context !== null && context.state === 'suspended') void context.resume();
+    if (context !== null && context.state === 'suspended') {
+      context.resume().catch(() => undefined);
+    }
     return context;
   }
 
