@@ -3,9 +3,9 @@ import type { AiStrategy } from './ai/types';
 import { toObservedShots } from './ai/types';
 import { applyShot, isFleetSunk } from './board';
 import { BOARD_SIZE } from './constants';
-import { randomPlacement } from './placement';
+import { assertPlaceableFleet, randomPlacement } from './placement';
 import { deriveSeed, mulberry32, randomSeed } from './rng';
-import type { Coord, Difficulty, GameState, Shot, ShotOutcome } from './types';
+import type { Board, Coord, Difficulty, GameState, Shot, ShotOutcome } from './types';
 
 export const DEFAULT_DIFFICULTY: Difficulty = 'medium';
 
@@ -17,14 +17,22 @@ export type GameAction =
       readonly seed?: number;
       /** Omitted keeps the difficulty the current game is being played at. */
       readonly difficulty?: Difficulty;
+      /** Manual layout; omitted places the player fleet at random. */
+      readonly playerBoard?: Board;
     };
 
+/**
+ * `playerBoard` lets the player bring their own layout; it is validated here so
+ * an illegal fleet can never enter game state.
+ */
 export function newGame(
   seed: number = randomSeed(),
   difficulty: Difficulty = DEFAULT_DIFFICULTY,
+  playerBoard?: Board,
 ): GameState {
+  if (playerBoard !== undefined) assertPlaceableFleet(playerBoard);
   return {
-    player: randomPlacement(mulberry32(deriveSeed(seed, 0))),
+    player: playerBoard ?? randomPlacement(mulberry32(deriveSeed(seed, 0))),
     ai: randomPlacement(mulberry32(deriveSeed(seed, 1))),
     turn: 'player',
     phase: 'playing',
@@ -109,6 +117,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'AI_TURN':
       return aiFire(state).state;
     case 'NEW_GAME':
-      return newGame(action.seed, action.difficulty ?? state.difficulty);
+      return newGame(
+        action.seed,
+        action.difficulty ?? state.difficulty,
+        action.playerBoard,
+      );
   }
 }

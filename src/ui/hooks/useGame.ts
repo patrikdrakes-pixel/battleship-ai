@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { DEFAULT_DIFFICULTY, gameReducer, newGame } from '../../engine/game';
-import type { Coord, Difficulty, GameState } from '../../engine/types';
+import type { Board, Coord, Difficulty, GameState } from '../../engine/types';
 
 export const DEFAULT_AI_DELAY_MS = 450;
 
@@ -15,6 +15,8 @@ export interface UseGameResult {
   readonly state: GameState;
   readonly fire: (coord: Coord) => void;
   readonly restart: () => void;
+  /** Starts a fresh game with a manually placed player fleet. */
+  readonly startWith: (playerBoard: Board) => void;
   /** Picking a difficulty starts a fresh game at that setting. */
   readonly selectDifficulty: (difficulty: Difficulty) => void;
 }
@@ -36,10 +38,14 @@ export function useGame({
 
   const fire = useCallback((coord: Coord) => dispatch({ type: 'FIRE', coord }), []);
   const restart = useCallback(() => dispatch({ type: 'NEW_GAME' }), []);
+  const startWith = useCallback(
+    (playerBoard: Board) => dispatch({ type: 'NEW_GAME', playerBoard }),
+    [],
+  );
   const selectDifficulty = useCallback(
     (next: Difficulty) => dispatch({ type: 'NEW_GAME', difficulty: next }),
     [],
   );
 
-  return { state, fire, restart, selectDifficulty };
+  return { state, fire, restart, startWith, selectDifficulty };
 }

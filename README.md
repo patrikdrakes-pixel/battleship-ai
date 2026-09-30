@@ -13,6 +13,8 @@ React + TypeScript + Vite, with the game rules implemented as a framework-free e
   lost, and offers Play again, a difficulty switch, or dismissal to review the boards
 - New Game restarts at any time; games are reproducible with `?seed=`
 - Easy / Medium / Hard AI difficulty, selectable at any time
+- Optional manual fleet placement: Place ships opens a setup board with a legality
+  preview, rotate, random and clear; random placement stays the default
 
 ## Architecture
 
@@ -38,7 +40,8 @@ src/
   ui/
     hooks/useGame.ts   useReducer(gameReducer) + cosmetic AI delay
     components/        Board, Cell, ShipLayer, Legend, FleetStatus, StatusBanner,
-                       DifficultySelect, NewGameButton, GameOverOverlay
+                       DifficultySelect, NewGameButton, GameOverOverlay,
+                       PlacementScreen, PlacementBoard
     App.tsx, labels.ts, stats.ts, styles/app.css
   main.tsx             entry point, parses ?seed=, ?delay= and ?difficulty=
 ```
@@ -48,19 +51,28 @@ src/
 All transitions live in `gameReducer` (`src/engine/game.ts`); the UI only dispatches
 intents (`FIRE`, `AI_TURN`, `NEW_GAME`) and renders `phase` / `turn`.
 
-| From (`phase`, `turn`) | Action                               | Condition                                     | To                  |
-| ---------------------- | ------------------------------------ | --------------------------------------------- | ------------------- |
-| `playing`, `player`    | `FIRE(coord)`                        | cell untargeted, not the last enemy ship cell | `playing`, `ai`     |
-| `playing`, `ai`        | `AI_TURN`                            | shot does not sink the last player ship       | `playing`, `player` |
-| `playing`, `player`    | `FIRE(coord)`                        | shot sinks the last enemy ship                | `playerWon`         |
-| `playing`, `ai`        | `AI_TURN`                            | shot sinks the last player ship               | `aiWon`             |
-| `playing`, `player`    | `FIRE(coord)`                        | already fired at `coord`                      | unchanged           |
-| any                    | out-of-turn or terminal-state action | —                                             | unchanged           |
-| any                    | `NEW_GAME(seed?, difficulty?)`       | —                                             | `playing`, `player` |
+| From (`phase`, `turn`) | Action                                       | Condition                                     | To                  |
+| ---------------------- | -------------------------------------------- | --------------------------------------------- | ------------------- |
+| `playing`, `player`    | `FIRE(coord)`                                | cell untargeted, not the last enemy ship cell | `playing`, `ai`     |
+| `playing`, `ai`        | `AI_TURN`                                    | shot does not sink the last player ship       | `playing`, `player` |
+| `playing`, `player`    | `FIRE(coord)`                                | shot sinks the last enemy ship                | `playerWon`         |
+| `playing`, `ai`        | `AI_TURN`                                    | shot sinks the last player ship               | `aiWon`             |
+| `playing`, `player`    | `FIRE(coord)`                                | already fired at `coord`                      | unchanged           |
+| any                    | out-of-turn or terminal-state action         | —                                             | unchanged           |
+| any                    | `NEW_GAME(seed?, difficulty?, playerBoard?)` | —                                             | `playing`, `player` |
 
 The win check happens in the same step as the shot, so a losing side never gets a reply
 shot. The AI keeps no mutable state: its next move is derived from its own shot history,
 so a reset cannot leave it stale.
+
+### Fleet placement
+
+Both fleets are placed by the engine. `NEW_GAME` without `playerBoard` places the player
+fleet randomly from the seed, exactly as before; with one it adopts that layout after
+`assertPlaceableFleet` has checked the fleet is complete, correctly sized, in bounds,
+non-overlapping and unfired — an illegal layout throws instead of entering game state.
+The AI fleet is always random. The setup UI owns no rules: it builds its board with
+`canPlace` / `placeShip` and hands the finished one to the reducer.
 
 ### AI and difficulty
 
@@ -126,6 +138,11 @@ What is covered:
   agreement against the shot history after placement, a miss, a hit, a sink, and a wipe.
 - **Placement** (`tests/engine/placement.test.ts`): 300 seeded fleets are legal, 17 cells,
   deterministic per seed, both orientations occur.
+- **Manual placement** (`tests/engine/manualPlacement.test.ts`, `tests/ui/placement.test.tsx`,
+  `e2e/placement.spec.ts`): `remainingFleet` / `assertPlaceableFleet` accept legal layouts
+  and reject incomplete, mis-sized, overlapping, out-of-bounds and already-fired boards;
+  `newGame` keeps a supplied layout and still randomizes the AI; the setup UI places,
+  previews, rotates, randomizes, clears, cancels and starts a game.
 - **Transitions** (`tests/engine/game.test.ts`): player → AI → player, both wins, repeat
   shots, out-of-turn input, reset.
 - **AI** (`tests/engine/ai.test.ts`): never repeats a shot, hunt → target after a hit,
@@ -135,7 +152,7 @@ What is covered:
 - **UI** (`tests/ui/app.test.tsx`) and **E2E** (`e2e/game.spec.ts`): rendering, hidden
   enemy fleet, click-to-fire, a full win, a full loss, and New Game.
 - **Visual regression** (`e2e/visual.spec.ts`): screenshots of a fresh board, the
-  miss/hit/sunk states and the end-game overlay, desktop and mobile. Pixel output depends
+  miss/hit/sunk states, the end-game overlay and the placement screen, desktop and mobile. Pixel output depends
   on the OS font stack, so these run only inside `mcr.microsoft.com/playwright:<version>`
   — locally via `npm run e2e:visual:docker`, in CI as the "Visual regression" job. Append
   `-- --update-snapshots` to the docker script to re-record after an intended restyle, and
@@ -143,8 +160,8 @@ What is covered:
   so it needs a Linux-built `node_modules`: on macOS or Windows the host's native bindings
   (`rolldown`, `lightningcss`) cannot load in the container — re-record from Linux, WSL, or
   by downloading the snapshots from a CI run instead.
-- **Accessibility** (`e2e/a11y.spec.ts`): axe-core scans of the fresh board and of the
-  finished game with its overlay, on desktop and mobile, asserting zero WCAG 2.1 A/AA
+- **Accessibility** (`e2e/a11y.spec.ts`): axe-core scans of the fresh board, the placement
+  screen, and the finished game with its overlay, on desktop and mobile, asserting zero WCAG 2.1 A/AA
   violations.
 
 ## Accessibility

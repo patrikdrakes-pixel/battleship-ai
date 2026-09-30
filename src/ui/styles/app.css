@@ -574,3 +574,69 @@ button.cell:not(:disabled):hover {
     font-size: 0.72rem;
   }
 }
+
+.placement {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.placement h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.placement-hint {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.placement-current {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+.placement-body {
+  display: grid;
+  grid-template-columns: minmax(min(320px, 100%), 30rem) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.placement-fleet {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.placement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.cell--preview-legal {
+  background: rgb(53 196 168 / 45%);
+  border-color: var(--accent);
+}
+
+.cell--preview-illegal {
+  background: rgb(255 90 69 / 45%);
+  border-color: var(--hit);
+}
+
+@media (max-width: 720px) {
+  .placement-body {
+    grid-template-columns: 1fr;
+  }
+}
