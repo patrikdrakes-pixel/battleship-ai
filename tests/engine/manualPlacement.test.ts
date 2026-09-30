@@ -66,6 +66,27 @@ describe('assertPlaceableFleet', () => {
     );
   });
 
+  it('rejects a ship cell present in grid but not in shipAt', () => {
+    const board = manualFleet();
+    const grid = board.grid.map((row, r) =>
+      r === 9 ? row.map((state, c) => (c === 9 ? 'ship' : state)) : row,
+    );
+    expect(() => assertPlaceableFleet({ ...board, grid })).toThrow(/disagrees/);
+  });
+
+  it('rejects a shipAt entry that no ship covers', () => {
+    const board = manualFleet();
+    const shipAt = board.shipAt.map((row, r) =>
+      r === 9 ? row.map((id, c) => (c === 9 ? 'carrier' : id)) : row,
+    );
+    const grid = board.grid.map((row, r) =>
+      r === 9 ? row.map((state, c) => (c === 9 ? 'ship' : state)) : row,
+    );
+    expect(() => assertPlaceableFleet({ ...board, grid, shipAt })).toThrow(
+      /marks 18 ship cells/,
+    );
+  });
+
   it('rejects a board that has already been fired at', () => {
     const board = applyShot(manualFleet(), { r: 9, c: 9 }).board;
     expect(() => assertPlaceableFleet(board)).toThrow(/already been fired at/);

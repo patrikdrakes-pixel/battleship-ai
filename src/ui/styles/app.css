@@ -625,12 +625,14 @@ button.cell:not(:disabled):hover {
   margin-top: 1rem;
 }
 
-.cell--preview-legal {
+button.cell.cell--preview-legal,
+button.cell.cell--preview-legal:not(:disabled):hover {
   background: rgb(53 196 168 / 45%);
   border-color: var(--accent);
 }
 
-.cell--preview-illegal {
+button.cell.cell--preview-illegal,
+button.cell.cell--preview-illegal:not(:disabled):hover {
   background: rgb(255 90 69 / 45%);
   border-color: var(--hit);
 }
