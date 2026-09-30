@@ -3,9 +3,12 @@ import { DIFFICULTIES } from '../../engine/ai';
 import type { Difficulty, GameState } from '../../engine/types';
 import { DIFFICULTY_LABELS } from '../labels';
 import { gameSummary } from '../stats';
+import type { MatchRecord } from '../storage';
 
 export interface GameOverOverlayProps {
   readonly state: GameState;
+  /** Wins and losses kept on this device. */
+  readonly record: MatchRecord;
   readonly onPlayAgain: () => void;
   readonly onSelectDifficulty: (difficulty: Difficulty) => void;
   readonly onDismiss: () => void;
@@ -13,6 +16,7 @@ export interface GameOverOverlayProps {
 
 export function GameOverOverlay({
   state,
+  record,
   onPlayAgain,
   onSelectDifficulty,
   onDismiss,
@@ -110,6 +114,10 @@ export function GameOverOverlay({
           <div>
             <dt>Difficulty</dt>
             <dd data-testid="stat-difficulty">{DIFFICULTY_LABELS[state.difficulty]}</dd>
+          </div>
+          <div>
+            <dt>Record on this device</dt>
+            <dd data-testid="stat-record">{`${record.wins}W – ${record.losses}L`}</dd>
           </div>
         </dl>
 

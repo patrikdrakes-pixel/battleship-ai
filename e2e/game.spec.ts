@@ -290,3 +290,14 @@ test('sound can be muted and playing stays possible while muted', async ({ page 
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('difficulty and mute survive a reload', async ({ page }) => {
+  await open(page, SEED);
+  await page.getByTestId('difficulty').selectOption('hard');
+  await page.getByTestId('mute-toggle').click();
+
+  await page.reload();
+
+  await expect(page.getByTestId('difficulty')).toHaveValue('hard');
+  await expect(page.getByTestId('mute-toggle')).toHaveAttribute('aria-pressed', 'true');
+});
