@@ -69,11 +69,29 @@ export function assertPlaceableFleet(board: Board): void {
       }
     }
   }
-  for (const row of board.grid) {
-    for (const state of row) {
+  if (board.grid.length !== BOARD_SIZE || board.shipAt.length !== BOARD_SIZE) {
+    throw new Error(`Board must have ${BOARD_SIZE} rows`);
+  }
+  const fleetCells = board.ships.reduce((sum, ship) => sum + ship.size, 0);
+  let occupied = 0;
+  for (let r = 0; r < BOARD_SIZE; r += 1) {
+    const gridRow = board.grid[r];
+    const shipRow = board.shipAt[r];
+    if (gridRow?.length !== BOARD_SIZE || shipRow?.length !== BOARD_SIZE) {
+      throw new Error(`Board must have ${BOARD_SIZE} columns`);
+    }
+    for (let c = 0; c < BOARD_SIZE; c += 1) {
+      const state = gridRow[c];
       if (state !== 'empty' && state !== 'ship') {
         throw new Error('Board has already been fired at');
       }
+      if ((state === 'ship') !== (shipRow[c] !== null)) {
+        throw new Error(`Cell (${r}, ${c}) disagrees between grid and shipAt`);
+      }
+      if (state === 'ship') occupied += 1;
     }
+  }
+  if (occupied !== fleetCells) {
+    throw new Error(`Board marks ${occupied} ship cells, fleet covers ${fleetCells}`);
   }
 }
