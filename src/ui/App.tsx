@@ -5,10 +5,13 @@ import { DifficultySelect } from './components/DifficultySelect';
 import { FleetStatus } from './components/FleetStatus';
 import { GameOverOverlay } from './components/GameOverOverlay';
 import { Legend } from './components/Legend';
+import { MuteToggle } from './components/MuteToggle';
 import { NewGameButton } from './components/NewGameButton';
 import { PlacementScreen } from './components/PlacementScreen';
 import { StatusBanner } from './components/StatusBanner';
 import { useGame } from './hooks/useGame';
+import { useSound } from './hooks/useSound';
+import type { SoundPlayer } from './sound';
 import './styles/app.css';
 
 export interface AppProps {
@@ -16,9 +19,11 @@ export interface AppProps {
   readonly seed?: number;
   readonly aiDelayMs?: number;
   readonly difficulty?: Difficulty;
+  /** Injected in tests; the app otherwise synthesises audio itself. */
+  readonly soundPlayer?: SoundPlayer;
 }
 
-export function App({ seed, aiDelayMs, difficulty }: AppProps) {
+export function App({ seed, aiDelayMs, difficulty, soundPlayer }: AppProps) {
   const { state, fire, restart, startWith, selectDifficulty } = useGame({
     seed,
     aiDelayMs,
@@ -26,6 +31,9 @@ export function App({ seed, aiDelayMs, difficulty }: AppProps) {
   });
   const [reviewing, setReviewing] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [muted, setMuted] = useState(false);
+
+  useSound(state, muted, soundPlayer);
 
   const playAgain = useCallback(() => {
     setReviewing(false);
@@ -69,6 +77,7 @@ export function App({ seed, aiDelayMs, difficulty }: AppProps) {
           >
             Place ships
           </button>
+          <MuteToggle muted={muted} onToggle={() => setMuted(!muted)} />
           <NewGameButton onClick={playAgain} />
         </div>
       </header>

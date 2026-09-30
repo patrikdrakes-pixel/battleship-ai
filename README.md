@@ -15,6 +15,7 @@ React + TypeScript + Vite, with the game rules implemented as a framework-free e
 - Easy / Medium / Hard AI difficulty, selectable at any time
 - Optional manual fleet placement: Place ships opens a setup board with a legality
   preview, rotate, random and clear; random placement stays the default
+- Synthesised sound for miss / hit / sunk / win / loss, with a Sound on|off toggle
 
 ## Architecture
 
@@ -41,7 +42,9 @@ src/
     hooks/useGame.ts   useReducer(gameReducer) + cosmetic AI delay
     components/        Board, Cell, ShipLayer, Legend, FleetStatus, StatusBanner,
                        DifficultySelect, NewGameButton, GameOverOverlay,
-                       PlacementScreen, PlacementBoard
+                       PlacementScreen, PlacementBoard, MuteToggle
+    hooks/useSound.ts  plays a blip per new shot and per result
+    sound.ts           WebAudio tone synthesis (no audio assets)
     App.tsx, labels.ts, stats.ts, styles/app.css
   main.tsx             entry point, parses ?seed=, ?delay= and ?difficulty=
 ```
@@ -149,6 +152,9 @@ What is covered:
   correct axis after multiple hits, back to hunt after a sink, edges and corners.
 - **Fuzz** (`tests/engine/fuzz.test.ts`): 60 seeded full games terminate with no repeated
   shots and consistent boards.
+- **Sound** (`tests/ui/sound.test.tsx`): the outcome of each shot and the result play a
+  blip, muting silences them, the toggle reports `aria-pressed`, and a missing or
+  blocked `AudioContext` stays silent instead of throwing.
 - **UI** (`tests/ui/app.test.tsx`) and **E2E** (`e2e/game.spec.ts`): rendering, hidden
   enemy fleet, click-to-fire, a full win, a full loss, and New Game.
 - **Visual regression** (`e2e/visual.spec.ts`): screenshots of a fresh board, the

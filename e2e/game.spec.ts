@@ -271,3 +271,22 @@ test('new game resets the board', async ({ page }) => {
   await expect(page.getByTestId('status')).toContainText('Your turn');
   await expect(page.getByTestId('shot-log')).toHaveText('');
 });
+
+test('sound can be muted and playing stays possible while muted', async ({ page }) => {
+  await open(page, SEED);
+  const toggle = page.getByTestId('mute-toggle');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toHaveText('Sound off');
+
+  const { enemyWaterLabels } = layout(SEED);
+  await fireAt(page, enemyWaterLabels[0]);
+  await expect(
+    page.getByTestId('enemy-board').locator('[data-state="miss"]'),
+  ).toHaveCount(1);
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+});
