@@ -158,8 +158,10 @@ What is covered:
   `-- --update-snapshots` to the docker script to re-record after an intended restyle, and
   keep the image tag in sync with `@playwright/test`. The script mounts the working tree,
   so it needs a Linux-built `node_modules`: on macOS or Windows the host's native bindings
-  (`rolldown`, `lightningcss`) cannot load in the container — re-record from Linux, WSL, or
-  by downloading the snapshots from a CI run instead.
+  (`rolldown`, `lightningcss`) cannot load in the container — re-record from Linux or WSL
+  instead, or push the change, let the "Visual regression" job fail, and copy the
+  `*-actual.png` images from its `playwright-visual-report` artifact over the baselines in
+  `e2e/visual.spec.ts-snapshots/`.
 - **Accessibility** (`e2e/a11y.spec.ts`): axe-core scans of the fresh board, the placement
   screen, and the finished game with its overlay, on desktop and mobile, asserting zero WCAG 2.1 A/AA
   violations.
