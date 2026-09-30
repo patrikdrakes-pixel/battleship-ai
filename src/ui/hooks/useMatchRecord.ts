@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GameState } from '../../engine/types';
-import { loadRecord, saveRecord, type MatchRecord } from '../storage';
+import { loadRecord, recordResult, type MatchRecord } from '../storage';
 
 /**
  * Counts each finished game once. A game keeps its state object after the final
@@ -18,16 +18,8 @@ export function useMatchRecord(state: GameState): MatchRecord {
     if (counted.current === state) return;
     counted.current = state;
 
-    setRecord((previous) =>
-      state.phase === 'playerWon'
-        ? { wins: previous.wins + 1, losses: previous.losses }
-        : { wins: previous.wins, losses: previous.losses + 1 },
-    );
+    setRecord(recordResult(state.phase === 'playerWon' ? 'win' : 'loss'));
   }, [state]);
-
-  useEffect(() => {
-    saveRecord(record);
-  }, [record]);
 
   return record;
 }

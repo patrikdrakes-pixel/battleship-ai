@@ -53,8 +53,9 @@ export function loadPreferences(): Preferences {
   return { difficulty, muted: value.muted === true };
 }
 
-export function savePreferences(preferences: Preferences): void {
-  write(PREFERENCES_KEY, preferences);
+/** Merges into what is stored now, so two tabs changing different fields don't clobber each other. */
+export function savePreferences(preferences: Partial<Preferences>): void {
+  write(PREFERENCES_KEY, { ...loadPreferences(), ...preferences });
 }
 
 export function loadRecord(): MatchRecord {
@@ -63,6 +64,13 @@ export function loadRecord(): MatchRecord {
   return { wins: asCount(value.wins), losses: asCount(value.losses) };
 }
 
-export function saveRecord(record: MatchRecord): void {
-  write(RECORD_KEY, record);
+/** Increments the stored record rather than a cached copy and returns the result. */
+export function recordResult(outcome: 'win' | 'loss'): MatchRecord {
+  const current = loadRecord();
+  const next =
+    outcome === 'win'
+      ? { wins: current.wins + 1, losses: current.losses }
+      : { wins: current.wins, losses: current.losses + 1 };
+  write(RECORD_KEY, next);
+  return next;
 }

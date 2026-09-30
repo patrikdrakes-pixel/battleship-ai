@@ -40,8 +40,11 @@ export function App({ seed, aiDelayMs, difficulty, soundPlayer }: AppProps) {
   const record = useMatchRecord(state);
 
   useEffect(() => {
-    savePreferences({ difficulty: state.difficulty, muted });
-  }, [state.difficulty, muted]);
+    savePreferences({ difficulty: state.difficulty });
+  }, [state.difficulty]);
+  useEffect(() => {
+    savePreferences({ muted });
+  }, [muted]);
 
   const playAgain = useCallback(() => {
     setReviewing(false);
