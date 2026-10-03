@@ -21,7 +21,7 @@
     "e2e:visual:docker": "docker run --rm --ipc=host -v \"$PWD\":/work -w /work -u $(id -u):$(id -g) -e HOME=/tmp mcr.microsoft.com/playwright:v1.63.0-noble npm run e2e:visual --"
   },
   "dependencies": {
-    "@sentry/react": "10.75.1",
+    "@sentry/react": "11.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
